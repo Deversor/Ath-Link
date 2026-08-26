@@ -9,6 +9,13 @@ interface AuthState {
   failedAttempts: number;
   lockedUntil: number | null; // epoch ms, null when not locked
   signIn: (email: string, password: string) => Promise<{ success: boolean }>;
+  signUp: (params: {
+    email: string;
+    password: string;
+    fullName: string;
+    role: 'student' | 'coach' | 'staff';
+    sport?: string;
+  }) => Promise<{ success: boolean }>;
   signOut: () => Promise<void>;
   clearError: () => void;
 }
@@ -59,6 +66,30 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       failedAttempts: 0,
       lockedUntil: null,
     });
+    return { success: true };
+  },
+
+  signUp: async ({ email, password, fullName, role, sport }) => {
+    set({ isLoading: true, error: null });
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+          role,
+          sport: sport ?? null,
+        },
+      },
+    });
+
+    if (error) {
+      set({ isLoading: false, error: error.message });
+      return { success: false };
+    }
+
+    set({ user: data.user, isLoading: false, error: null });
     return { success: true };
   },
 

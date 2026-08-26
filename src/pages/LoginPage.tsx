@@ -1,6 +1,8 @@
-import { Controller, useForm } from 'react-hook-form';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Mail, Lock, Trophy, ShieldCheck, HelpCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Mail, Lock, Trophy, ShieldCheck, HelpCircle, X } from 'lucide-react';
 import { loginSchema, type LoginFormValues } from '../lib/schemas/loginSchema';
 import { useAuthStore } from '../store/useAuthStore';
 import { Button } from '@/components/ui/button';
@@ -11,10 +13,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 export default function LoginPage() {
   const { signIn, isLoading, error, lockedUntil } = useAuthStore();
 
+  const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
+  const [hasAgreed, setHasAgreed] = useState(false);
+  const [pendingValues, setPendingValues] = useState<LoginFormValues | null>(null);
+
   const {
     register,
     handleSubmit,
-    control,
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -22,9 +27,19 @@ export default function LoginPage() {
 
   const isLocked = !!lockedUntil && Date.now() < lockedUntil;
 
-  const onSubmit = async (values: LoginFormValues) => {
-    const { success } = await signIn(values.email, values.password);
+  // Step 1: email/password pass validation -> hold them and open the consent modal
+  const onValidated = (values: LoginFormValues) => {
+    setPendingValues(values);
+    setHasAgreed(false);
+    setIsPrivacyModalOpen(true);
+  };
+
+  // Step 2: user agrees inside the modal -> now actually sign in
+  const confirmAndSignIn = async () => {
+    if (!pendingValues) return;
+    const { success } = await signIn(pendingValues.email, pendingValues.password);
     if (success) {
+      setIsPrivacyModalOpen(false);
       // TODO: navigate to the athlete/staff dashboard once routing is wired up
       // navigate('/dashboard')
     }
@@ -70,7 +85,7 @@ export default function LoginPage() {
           <h2 className="text-2xl font-bold text-neutral-900 mb-1">Welcome back</h2>
           <p className="text-neutral-500 mb-8">Sign in to your portal account.</p>
 
-          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+          <form onSubmit={handleSubmit(onValidated)} noValidate className="space-y-5">
             {/* Email */}
             <div>
               <Label htmlFor="email" className="mb-1.5 block">
@@ -116,44 +131,6 @@ export default function LoginPage() {
               )}
             </div>
 
-            {/* Privacy notice */}
-            <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm">
-              <p className="font-medium text-neutral-800 mb-1">Privacy Notice (RA 10173)</p>
-              <p className="text-neutral-500 text-xs leading-relaxed mb-3">
-                PalawanSU Sports Office collects your institutional login data
-                to verify your affiliation and provide access to portal
-                services. We process your data in compliance with the Data
-                Privacy Act of 2012 (RA 10173). Your data is kept secure and
-                will not be shared without your consent.{' '}
-                <a href="/privacy-policy" className="text-orange-600 underline hover:text-orange-700">
-                  Read our full Privacy Policy.
-                </a>
-              </p>
-              <div className="flex items-start gap-2">
-                <Controller
-                  name="agreedToPrivacy"
-                  control={control}
-                  defaultValue={false as unknown as true}
-                  render={({ field }) => (
-                    <Checkbox
-                      id="agreedToPrivacy"
-                      className="mt-0.5"
-                      checked={field.value}
-                      onCheckedChange={(checked: boolean | 'indeterminate') =>
-                        field.onChange(checked === true)
-                      }
-                    />
-                  )}
-                />
-                <Label htmlFor="agreedToPrivacy" className="text-xs font-normal text-neutral-700 leading-snug">
-                  I have read and agree to the Privacy Notice.
-                </Label>
-              </div>
-              {errors.agreedToPrivacy && (
-                <p className="mt-1 text-xs text-red-600">{errors.agreedToPrivacy.message}</p>
-              )}
-            </div>
-
             {error && (
               <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
                 {error}
@@ -171,9 +148,9 @@ export default function LoginPage() {
 
           <p className="text-center text-sm text-neutral-500 mt-6">
             Don&apos;t have an account?{' '}
-            <a href="/signup" className="text-orange-600 font-medium hover:text-orange-700">
+            <Link to="/signup" className="text-orange-600 font-medium hover:text-orange-700">
               Sign up
-            </a>
+            </Link>
           </p>
           <p className="text-center text-sm mt-2">
             <a href="/facility-booking" className="text-neutral-500 underline hover:text-neutral-700">
@@ -190,6 +167,77 @@ export default function LoginPage() {
       >
         <HelpCircle className="w-5 h-5" />
       </button>
+
+      {/* Privacy consent modal — shown after email/password pass validation, before sign-in actually fires */}
+      {isPrivacyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setIsPrivacyModalOpen(false)}
+          />
+          <div className="relative w-full max-w-md rounded-xl bg-white shadow-xl p-6">
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={() => setIsPrivacyModalOpen(false)}
+              className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <h3 className="font-semibold text-neutral-900 mb-1">Privacy Notice (RA 10173)</h3>
+            <p className="text-neutral-500 text-sm leading-relaxed mb-4">
+              PalawanSU Sports Office collects your institutional login data
+              to verify your affiliation and provide access to portal
+              services. We process your data in compliance with the Data
+              Privacy Act of 2012 (RA 10173). Your data is kept secure and
+              will not be shared without your consent.{' '}
+              <a href="/privacy-policy" className="text-orange-600 underline hover:text-orange-700">
+                Read our full Privacy Policy.
+              </a>
+            </p>
+
+            <div className="flex items-start gap-2 mb-5">
+              <Checkbox
+                id="modalAgree"
+                className="mt-0.5"
+                checked={hasAgreed}
+                onCheckedChange={(checked: boolean | 'indeterminate') =>
+                  setHasAgreed(checked === true)
+                }
+              />
+              <Label htmlFor="modalAgree" className="text-sm font-normal text-neutral-700 leading-snug">
+                I have read and agree to the Privacy Notice.
+              </Label>
+            </div>
+
+            {error && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-4">
+                {error}
+              </p>
+            )}
+
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => setIsPrivacyModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                disabled={!hasAgreed || isLoading}
+                onClick={confirmAndSignIn}
+                className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300"
+              >
+                {isLoading ? 'Signing in…' : 'Agree & Sign In'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

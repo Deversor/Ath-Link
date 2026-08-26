@@ -13,9 +13,6 @@ export const loginSchema = z.object({
       message: `Email must be a ${INSTITUTIONAL_DOMAIN} address`,
     }),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  agreedToPrivacy: z.literal(true, {
-    errorMap: () => ({ message: 'You must agree to the Privacy Notice to continue' }),
-  }),
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
