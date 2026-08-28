@@ -59,8 +59,6 @@ function App() {
             </RequireAuth>
           }
         />
-
-        {/* TODO Phase 2: /documents, /schedules, /facility-reservation */}
       </Routes>
     </BrowserRouter>
   );
