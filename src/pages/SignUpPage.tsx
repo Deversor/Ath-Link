@@ -36,9 +36,16 @@ export default function SignUpPage() {
     });
 
     if (success) {
-      // Only student athletes go through the athlete profile setup flow for now
       if (values.role === 'student') {
         navigate('/profile-setup', {
+          state: {
+            fullName: values.fullName,
+            email: values.email,
+            sport: values.sport,
+          },
+        });
+      } else if (values.role === 'coach') {
+        navigate('/coach-profile-setup', {
           state: {
             fullName: values.fullName,
             email: values.email,
@@ -119,10 +126,10 @@ export default function SignUpPage() {
             </div>
 
             {/* Sport dropdown only shows up when Student Athlete is selected */}
-            {selectedRole === 'student' && (
+            {(selectedRole === 'student' || selectedRole === 'coach') && (
               <div>
                 <Label htmlFor="sport" className="mb-1.5 block">
-                  Sport
+                  {selectedRole === 'coach' ? 'Sport You Manage' : 'Sport'}
                 </Label>
                 <select
                   id="sport"

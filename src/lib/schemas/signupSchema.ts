@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const INSTITUTIONAL_DOMAIN = '@psu.palawan.edu.ph';
+const INSTITUTIONAL_DOMAIN = '@psu.edu';
 
 export const SPORTS_LIST = [
   'Basketball',
@@ -43,11 +43,12 @@ export const signupSchema = z
     sport: z.string().optional(),
   })
   .superRefine((data, ctx) => {
-    // Sport is only required for the Student Athlete role
-    if (data.role === 'student' && !data.sport) {
+    // Sport is required for Student Athletes (their sport) and Coaches (the sport they manage)
+    if ((data.role === 'student' || data.role === 'coach') && !data.sport) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Please select your sport program',
+        message:
+          data.role === 'coach' ? 'Please select the sport you manage' : 'Please select your sport program',
         path: ['sport'],
       });
     }

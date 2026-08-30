@@ -9,18 +9,20 @@ export interface Profile {
   full_name: string;
   email: string;
   phone_number: string | null;
-  emergency_contact_name: string;
-  emergency_contact_phone: string;
-  age: number;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+  age: number | null;
   blood_type: string | null;
   height_cm: number | null;
   weight_kg: number | null;
-  student_id: string;
+  student_id: string | null;
   college_department: string | null;
-  course: string;
-  year_level: string;
-  sport: string;
-  role: string;
+  course: string | null;
+  year_level: string | null;
+  sport: string | null;
+  role: 'student' | 'coach' | 'staff';
+  specialization: string | null;
+  years_experience: number | null;
 }
 
 interface AuthState {
@@ -28,6 +30,7 @@ interface AuthState {
   profile: Profile | null;
   isLoading: boolean;
   isInitialized: boolean;
+  isProfileLoading: boolean;
   error: string | null;
   failedAttempts: number;
   lockedUntil: number | null; // epoch ms, null when not locked
@@ -54,6 +57,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   profile: null,
   isLoading: false,
   isInitialized: false,
+  isProfileLoading: false,
   error: null,
   failedAttempts: 0,
   lockedUntil: null,
@@ -82,6 +86,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { user } = get();
     if (!user) return;
 
+    set({ isProfileLoading: true });
+
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -91,6 +97,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!error && data) {
       set({ profile: data as Profile });
     }
+    set({ isProfileLoading: false });
   },
 
   updateProfile: async (updates) => {
