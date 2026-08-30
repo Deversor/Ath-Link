@@ -1,12 +1,7 @@
 import { type ReactNode, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuthStore, type Profile } from '../../store/useAuthStore';
-
-const ROLE_HOME: Record<Profile['role'], string> = {
-  student: '/dashboard',
-  coach: '/coach/dashboard',
-  staff: '/login', // staff portal not built yet
-};
+import { useAuthStore } from '../../store/useAuthStore';
+import { ROLE_HOME, isPrivilegedRole, type AppRole } from '../../lib/roleHome';
 
 export default function RequireAuth({
   children,
@@ -14,9 +9,9 @@ export default function RequireAuth({
 }: {
   children: ReactNode;
   /** If set, only a profile with this exact role may see the page. */
-  role?: Profile['role'];
+  role?: AppRole;
 }) {
-  const { user, profile, isInitialized, isProfileLoading, init } = useAuthStore();
+  const { user, profile, isInitialized, isProfileLoading, isAdminVerified, init } = useAuthStore();
 
   useEffect(() => {
     if (!isInitialized) {
@@ -48,6 +43,12 @@ export default function RequireAuth({
 
   if (role && profile && profile.role !== role) {
     return <Navigate to={ROLE_HOME[profile.role] ?? '/login'} replace />;
+  }
+
+  // Privileged roles must clear the admin login-key step before reaching
+  // any of their pages, even if they're logged in with the right role.
+  if (profile && isPrivilegedRole(profile.role) && !isAdminVerified) {
+    return <Navigate to="/admin-verify" replace />;
   }
 
   return <>{children}</>;

@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Trophy, ShieldCheck, HelpCircle, X } from 'lucide-react';
 import { loginSchema, type LoginFormValues } from '../lib/schemas/loginSchema';
 import { useAuthStore } from '../store/useAuthStore';
+import { ROLE_HOME, isPrivilegedRole } from '../lib/roleHome';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 
 export default function LoginPage() {
+  const navigate = useNavigate();
   const { signIn, isLoading, error, lockedUntil } = useAuthStore();
 
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
@@ -40,8 +42,13 @@ export default function LoginPage() {
     const { success } = await signIn(pendingValues.email, pendingValues.password);
     if (success) {
       setIsPrivacyModalOpen(false);
-      // TODO: navigate to the athlete/staff dashboard once routing is wired up
-      // navigate('/dashboard')
+
+      const profile = useAuthStore.getState().profile;
+      if (profile && isPrivilegedRole(profile.role)) {
+        navigate('/admin-verify');
+      } else if (profile) {
+        navigate(ROLE_HOME[profile.role]);
+      }
     }
   };
 

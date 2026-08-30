@@ -3,6 +3,8 @@ import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
 import ProfileSetupPage from './pages/ProfileSetupPage';
 import CoachProfileSetupPage from './pages/CoachProfileSetupPage';
+import AdminVerifyPage from './pages/AdminVerifyPage';
+import AdminSignUpPage from './pages/AdminSignUpPage';
 
 // Student portal
 import DashboardPage from './pages/portal/DashboardPage';
@@ -19,6 +21,15 @@ import CoachSchedulesPage from './pages/coach/CoachSchedulesPage';
 import CoachFacilityReservationPage from './pages/coach/CoachFacilityReservationPage';
 import CoachReportsPage from './pages/coach/CoachReportsPage';
 
+// Staff Admin portal
+import StaffAdminDashboardPage from './pages/staff-admin/StaffAdminDashboardPage';
+import StaffAdminWhitelistPage from './pages/staff-admin/StaffAdminWhitelistPage';
+import StaffAdminCoachManagementPage from './pages/staff-admin/StaffAdminCoachManagementPage';
+import StaffAdminCoachSchedulesPage from './pages/staff-admin/StaffAdminCoachSchedulesPage';
+import StaffAdminFacilityRequestsPage from './pages/staff-admin/StaffAdminFacilityRequestsPage';
+import StaffAdminAthleteGalleryPage from './pages/staff-admin/StaffAdminAthleteGalleryPage';
+import StaffAdminReportsPage from './pages/staff-admin/StaffAdminReportsPage';
+
 import RequireAuth from './components/layout/RequireAuth';
 
 function App() {
@@ -30,6 +41,8 @@ function App() {
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/profile-setup" element={<ProfileSetupPage />} />
         <Route path="/coach-profile-setup" element={<CoachProfileSetupPage />} />
+        <Route path="/admin-verify" element={<AdminVerifyPage />} />
+        <Route path="/admin-signup" element={<AdminSignUpPage />} />
 
         {/* ── Student portal ── */}
         <Route
@@ -123,6 +136,65 @@ function App() {
           }
         />
         {/* TODO Phase 2: /coach/athletes, /coach/schedules, /coach/facility-reservation, /coach/reports */}
+
+        {/* ── Staff Admin portal ── */}
+        <Route
+          path="/staff-admin/dashboard"
+          element={
+            <RequireAuth role="staff_admin">
+              <StaffAdminDashboardPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/staff-admin/whitelist"
+          element={
+            <RequireAuth role="staff_admin">
+              <StaffAdminWhitelistPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/staff-admin/coach-management"
+          element={
+            <RequireAuth role="staff_admin">
+              <StaffAdminCoachManagementPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/staff-admin/coach-schedules"
+          element={
+            <RequireAuth role="staff_admin">
+              <StaffAdminCoachSchedulesPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/staff-admin/facility-requests"
+          element={
+            <RequireAuth role="staff_admin">
+              <StaffAdminFacilityRequestsPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/staff-admin/athlete-gallery"
+          element={
+            <RequireAuth role="staff_admin">
+              <StaffAdminAthleteGalleryPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/staff-admin/reports"
+          element={
+            <RequireAuth role="staff_admin">
+              <StaffAdminReportsPage />
+            </RequireAuth>
+          }
+        />
+        {/* TODO Phase 3: /staff-admin/profile-settings */}
       </Routes>
     </BrowserRouter>
   );

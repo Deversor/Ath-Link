@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const INSTITUTIONAL_DOMAIN = '@psu.edu';
+const INSTITUTIONAL_DOMAIN = '@psu.palawan.edu.ph';
 
 export const SPORTS_LIST = [
   'Basketball',
@@ -23,7 +23,6 @@ export const SPORTS_LIST = [
 export const ROLES = [
   { value: 'student', label: 'Student Athlete' },
   { value: 'coach', label: 'Coach' },
-  { value: 'staff', label: 'Sports Office Staff' },
 ] as const;
 
 export const signupSchema = z
@@ -37,7 +36,7 @@ export const signupSchema = z
         message: `Email must be a ${INSTITUTIONAL_DOMAIN} address`,
       }),
     password: z.string().min(8, 'Password must be at least 8 characters'),
-    role: z.enum(['student', 'coach', 'staff'], {
+    role: z.enum(['student', 'coach'], {
       errorMap: () => ({ message: 'Please select a role' }),
     }),
     sport: z.string().optional(),
