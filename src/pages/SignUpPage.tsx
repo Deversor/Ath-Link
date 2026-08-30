@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
 import { signupSchema, type SignupFormValues, ROLES, SPORTS_LIST } from '../lib/schemas/signupSchema';
 import { useAuthStore } from '../store/useAuthStore';
+import { supabase } from '../lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +19,7 @@ export default function SignUpPage() {
     register,
     handleSubmit,
     watch,
+    setError,
     formState: { errors },
   } = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -27,6 +29,33 @@ export default function SignUpPage() {
   const selectedRole = watch('role');
 
   const onSubmit = async (values: SignupFormValues) => {
+    // Athletes can only sign up if a Staff Admin has whitelisted their email
+    if (values.role === 'student') {
+      const { data: isWhitelisted } = await supabase.rpc('is_email_whitelisted', {
+        p_email: values.email,
+      });
+      if (!isWhitelisted) {
+        setError('email', {
+          message: "This email hasn't been authorized for athlete registration yet. Contact your Sports Office.",
+        });
+        return;
+      }
+    }
+
+    // Coaches can only sign up for a sport a Staff Admin has assigned them to
+    if (values.role === 'coach') {
+      const { data: isWhitelisted } = await supabase.rpc('is_coach_whitelisted', {
+        p_email: values.email,
+        p_sport: values.sport,
+      });
+      if (!isWhitelisted) {
+        setError('sport', {
+          message: "You haven't been assigned as coach for this sport yet. Contact your Sports Office.",
+        });
+        return;
+      }
+    }
+
     const { success } = await signUp({
       email: values.email,
       password: values.password,
@@ -37,6 +66,7 @@ export default function SignUpPage() {
 
     if (success) {
       if (values.role === 'student') {
+        await supabase.rpc('mark_athlete_whitelist_used', { p_email: values.email });
         navigate('/profile-setup', {
           state: {
             fullName: values.fullName,
@@ -45,6 +75,10 @@ export default function SignUpPage() {
           },
         });
       } else if (values.role === 'coach') {
+        await supabase.rpc('mark_coach_whitelist_used', {
+          p_email: values.email,
+          p_sport: values.sport,
+        });
         navigate('/coach-profile-setup', {
           state: {
             fullName: values.fullName,
@@ -57,6 +91,7 @@ export default function SignUpPage() {
       }
     }
   };
+
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
