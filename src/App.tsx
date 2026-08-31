@@ -35,6 +35,11 @@ import SuperAdminDashboardPage from './pages/super-admin/SuperAdminDashboardPage
 import SuperAdminProfileSettingsPage from './pages/super-admin/SuperAdminProfileSettingsPage';
 import SuperAdminUserManagementPage from './pages/super-admin/SuperAdminUserManagementPage';
 import SuperAdminSportProgramsPage from './pages/super-admin/SuperAdminSportProgramsPage';
+import SuperAdminWhitelistPage from './pages/super-admin/SuperAdminWhitelistPage';
+import SuperAdminFacilityRequestsPage from './pages/super-admin/SuperAdminFacilityRequestsPage';
+import SuperAdminCoachSchedulesPage from './pages/super-admin/SuperAdminCoachSchedulesPage';
+import SuperAdminAthleteGalleryPage from './pages/super-admin/SuperAdminAthleteGalleryPage';
+import SuperAdminCoachManagementPage from './pages/super-admin/SuperAdminCoachManagementPage';
 
 import RequireAuth from './components/layout/RequireAuth';
 
@@ -235,7 +240,46 @@ function App() {
             </RequireAuth>
           }
         />
-        {/* TODO Phase 3: /superadmin/whitelist, /superadmin/facility-requests, /superadmin/coach-schedules, /superadmin/athlete-gallery, /superadmin/coach-management (reusing Staff Admin pages) */}
+        <Route
+          path="/superadmin/whitelist"
+          element={
+            <RequireAuth role="superadmin">
+              <SuperAdminWhitelistPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/superadmin/facility-requests"
+          element={
+            <RequireAuth role="superadmin">
+              <SuperAdminFacilityRequestsPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/superadmin/coach-schedules"
+          element={
+            <RequireAuth role="superadmin">
+              <SuperAdminCoachSchedulesPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/superadmin/athlete-gallery"
+          element={
+            <RequireAuth role="superadmin">
+              <SuperAdminAthleteGalleryPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/superadmin/coach-management"
+          element={
+            <RequireAuth role="superadmin">
+              <SuperAdminCoachManagementPage />
+            </RequireAuth>
+          }
+        />
         {/* TODO Phase 4: /superadmin/system-logs, /superadmin/reports */}
         {/* TODO Phase 5: /superadmin/database, /superadmin/system-settings */}
       </Routes>
