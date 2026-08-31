@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { BarChart3, Building2, Users, ImageIcon, Download } from 'lucide-react';
 import StaffAdminPortalLayout from '../../components/layout/StaffAdminPortalLayout';
 import { supabase } from '../../lib/supabase';
-import { SPORTS_LIST } from '../../lib/schemas/signupSchema';
+import { useSports } from '../../hooks/useSports';
 
 function downloadCsv(filename: string, rows: (string | number)[][]) {
   const csv = rows.map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
@@ -16,6 +16,7 @@ function downloadCsv(filename: string, rows: (string | number)[][]) {
 }
 
 export default function StaffAdminReportsPage() {
+  const sports = useSports();
   const [facilityRequestCount, setFacilityRequestCount] = useState(0);
   const [athleteCount, setAthleteCount] = useState(0);
   const [approvalRate, setApprovalRate] = useState(0);
@@ -66,7 +67,7 @@ export default function StaffAdminReportsPage() {
   const exportCoachAssignments = () => {
     downloadCsv('coach-assignments.csv', [
       ['Sport', 'Coach', 'Status'],
-      ...SPORTS_LIST.map((s) => [s, coachBySport[s] ?? '', coachBySport[s] ? 'Active' : 'Vacant']),
+      ...sports.map((s) => [s, coachBySport[s] ?? '', coachBySport[s] ? 'Active' : 'Vacant']),
     ]);
   };
 
@@ -118,7 +119,7 @@ export default function StaffAdminReportsPage() {
         <h2 className="font-semibold text-neutral-900 mb-1">Coach Assignments</h2>
         <p className="text-sm text-neutral-500 mb-4">Overview of coach assignments by sport</p>
         <div className="space-y-2 max-h-64 overflow-y-auto">
-          {SPORTS_LIST.map((sport) => (
+          {sports.map((sport) => (
             <div key={sport} className="flex items-center justify-between rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-2 text-sm">
               <div>
                 <p className="text-neutral-800">{sport}</p>
@@ -140,7 +141,7 @@ export default function StaffAdminReportsPage() {
         <h2 className="font-semibold text-neutral-900 mb-4">System Activity Summary</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="rounded-lg bg-orange-50 px-3 py-3 text-center">
-            <p className="text-xl font-bold text-orange-700">{sportsWithCoach}/{SPORTS_LIST.length}</p>
+            <p className="text-xl font-bold text-orange-700">{sportsWithCoach}/{sports.length}</p>
             <p className="text-xs text-orange-600">Sports with assigned coaches</p>
           </div>
           <div className="rounded-lg bg-green-50 px-3 py-3 text-center">

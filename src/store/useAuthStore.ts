@@ -24,6 +24,8 @@ export interface Profile {
   role: AppRole;
   specialization: string | null;
   years_experience: number | null;
+  department: string | null;
+  is_active: boolean;
 }
 
 interface AuthState {

@@ -2,7 +2,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, Link } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
-import { signupSchema, type SignupFormValues, ROLES, SPORTS_LIST } from '../lib/schemas/signupSchema';
+import { signupSchema, type SignupFormValues, ROLES } from '../lib/schemas/signupSchema';
+import { useSports } from '../hooks/useSports';
 import { useAuthStore } from '../store/useAuthStore';
 import { supabase } from '../lib/supabase';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ export default function SignUpPage() {
 
   // Watch the role field so the Sport dropdown can appear/disappear live
   const selectedRole = watch('role');
+  const sports = useSports();
 
   const onSubmit = async (values: SignupFormValues) => {
     // Athletes can only sign up if a Staff Admin has whitelisted their email
@@ -175,7 +177,7 @@ export default function SignUpPage() {
                   <option value="" disabled>
                     Select your sport
                   </option>
-                  {SPORTS_LIST.map((sport) => (
+                  {sports.map((sport) => (
                     <option key={sport} value={sport}>
                       {sport}
                     </option>

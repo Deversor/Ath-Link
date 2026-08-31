@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, Trophy, ShieldCheck, HelpCircle, X } from 'lucide-react';
 import { loginSchema, type LoginFormValues } from '../lib/schemas/loginSchema';
 import { useAuthStore } from '../store/useAuthStore';
@@ -13,6 +13,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const wasDeactivated = searchParams.get('deactivated') === '1';
   const { signIn, isLoading, error, lockedUntil } = useAuthStore();
 
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
@@ -91,6 +93,12 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           <h2 className="text-2xl font-bold text-neutral-900 mb-1">Welcome back</h2>
           <p className="text-neutral-500 mb-8">Sign in to your portal account.</p>
+
+          {wasDeactivated && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-6">
+              Your account has been deactivated. Contact your Sports Office administrator.
+            </p>
+          )}
 
           <form onSubmit={handleSubmit(onValidated)} noValidate className="space-y-5">
             {/* Email */}

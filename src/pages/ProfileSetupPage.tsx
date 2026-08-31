@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { User as UserIcon, Trophy } from 'lucide-react';
 import { profileSchema, type ProfileFormValues } from '../lib/schemas/profileSchema';
-import { SPORTS_LIST } from '../lib/schemas/signupSchema';
+import { useSports } from '../hooks/useSports';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuthStore';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ interface HandoffState {
 }
 
 export default function ProfileSetupPage() {
+  const sports = useSports();
   const navigate = useNavigate();
   const location = useLocation();
   const handoff = (location.state ?? {}) as HandoffState;
@@ -143,7 +144,7 @@ export default function ProfileSetupPage() {
                   <option value="" disabled>
                     Select your sport
                   </option>
-                  {SPORTS_LIST.map((sport) => (
+                  {sports.map((sport) => (
                     <option key={sport} value={sport}>
                       {sport}
                     </option>

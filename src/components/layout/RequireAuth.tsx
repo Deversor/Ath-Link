@@ -48,6 +48,12 @@ export default function RequireAuth({
     }
   }
 
+  // A deactivated account (Super Admin → User Management) loses access
+  // to every portal page immediately, even with a valid session.
+  if (profile && profile.is_active === false) {
+    return <Navigate to="/login?deactivated=1" replace />;
+  }
+
   // Privileged roles must clear the admin login-key step before reaching
   // any of their pages, even if they're logged in with the right role.
   if (profile && isPrivilegedRole(profile.role) && !isAdminVerified) {

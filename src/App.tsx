@@ -33,6 +33,8 @@ import StaffAdminReportsPage from './pages/staff-admin/StaffAdminReportsPage';
 // Super Admin portal
 import SuperAdminDashboardPage from './pages/super-admin/SuperAdminDashboardPage';
 import SuperAdminProfileSettingsPage from './pages/super-admin/SuperAdminProfileSettingsPage';
+import SuperAdminUserManagementPage from './pages/super-admin/SuperAdminUserManagementPage';
+import SuperAdminSportProgramsPage from './pages/super-admin/SuperAdminSportProgramsPage';
 
 import RequireAuth from './components/layout/RequireAuth';
 
@@ -217,7 +219,22 @@ function App() {
             </RequireAuth>
           }
         />
-        {/* TODO Phase 2: /superadmin/users, /superadmin/sport-programs */}
+        <Route
+          path="/superadmin/users"
+          element={
+            <RequireAuth role="superadmin">
+              <SuperAdminUserManagementPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/superadmin/sport-programs"
+          element={
+            <RequireAuth role="superadmin">
+              <SuperAdminSportProgramsPage />
+            </RequireAuth>
+          }
+        />
         {/* TODO Phase 3: /superadmin/whitelist, /superadmin/facility-requests, /superadmin/coach-schedules, /superadmin/athlete-gallery, /superadmin/coach-management (reusing Staff Admin pages) */}
         {/* TODO Phase 4: /superadmin/system-logs, /superadmin/reports */}
         {/* TODO Phase 5: /superadmin/database, /superadmin/system-settings */}

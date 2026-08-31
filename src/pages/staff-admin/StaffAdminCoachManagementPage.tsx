@@ -3,7 +3,7 @@ import { UserCog, KeyRound, RotateCcw, Send, UserPlus } from 'lucide-react';
 import StaffAdminPortalLayout from '../../components/layout/StaffAdminPortalLayout';
 import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
-import { SPORTS_LIST } from '../../lib/schemas/signupSchema';
+import { useSports } from '../../hooks/useSports';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -16,6 +16,7 @@ interface Coach {
 }
 
 export default function StaffAdminCoachManagementPage() {
+  const sports = useSports();
   const { user } = useAuthStore();
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [inviteEmails, setInviteEmails] = useState<Record<string, string>>({});
@@ -95,7 +96,7 @@ export default function StaffAdminCoachManagementPage() {
       )}
 
       <div className="space-y-4">
-        {SPORTS_LIST.map((sport) => {
+        {sports.map((sport) => {
           const coach = coachFor(sport);
           return (
             <div key={sport} className="bg-white border border-neutral-200 rounded-xl p-5">
