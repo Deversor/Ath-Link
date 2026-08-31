@@ -30,6 +30,10 @@ import StaffAdminFacilityRequestsPage from './pages/staff-admin/StaffAdminFacili
 import StaffAdminAthleteGalleryPage from './pages/staff-admin/StaffAdminAthleteGalleryPage';
 import StaffAdminReportsPage from './pages/staff-admin/StaffAdminReportsPage';
 
+// Super Admin portal
+import SuperAdminDashboardPage from './pages/super-admin/SuperAdminDashboardPage';
+import SuperAdminProfileSettingsPage from './pages/super-admin/SuperAdminProfileSettingsPage';
+
 import RequireAuth from './components/layout/RequireAuth';
 
 function App() {
@@ -195,6 +199,28 @@ function App() {
           }
         />
         {/* TODO Phase 3: /staff-admin/profile-settings */}
+
+        {/* ── Super Admin portal ── */}
+        <Route
+          path="/superadmin/dashboard"
+          element={
+            <RequireAuth role="superadmin">
+              <SuperAdminDashboardPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/superadmin/profile-settings"
+          element={
+            <RequireAuth role="superadmin">
+              <SuperAdminProfileSettingsPage />
+            </RequireAuth>
+          }
+        />
+        {/* TODO Phase 2: /superadmin/users, /superadmin/sport-programs */}
+        {/* TODO Phase 3: /superadmin/whitelist, /superadmin/facility-requests, /superadmin/coach-schedules, /superadmin/athlete-gallery, /superadmin/coach-management (reusing Staff Admin pages) */}
+        {/* TODO Phase 4: /superadmin/system-logs, /superadmin/reports */}
+        {/* TODO Phase 5: /superadmin/database, /superadmin/system-settings */}
       </Routes>
     </BrowserRouter>
   );

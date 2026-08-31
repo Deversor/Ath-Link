@@ -8,8 +8,8 @@ export default function RequireAuth({
   role,
 }: {
   children: ReactNode;
-  /** If set, only a profile with this exact role may see the page. */
-  role?: AppRole;
+  /** If set, only a profile with this role (or one of these roles) may see the page. */
+  role?: AppRole | AppRole[];
 }) {
   const { user, profile, isInitialized, isProfileLoading, isAdminVerified, init } = useAuthStore();
 
@@ -41,8 +41,11 @@ export default function RequireAuth({
     );
   }
 
-  if (role && profile && profile.role !== role) {
-    return <Navigate to={ROLE_HOME[profile.role] ?? '/login'} replace />;
+  if (role && profile) {
+    const allowed = Array.isArray(role) ? role : [role];
+    if (!allowed.includes(profile.role)) {
+      return <Navigate to={ROLE_HOME[profile.role] ?? '/login'} replace />;
+    }
   }
 
   // Privileged roles must clear the admin login-key step before reaching
