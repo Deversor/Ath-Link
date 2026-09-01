@@ -42,6 +42,8 @@ import SuperAdminAthleteGalleryPage from './pages/super-admin/SuperAdminAthleteG
 import SuperAdminCoachManagementPage from './pages/super-admin/SuperAdminCoachManagementPage';
 import SuperAdminSystemLogsPage from './pages/super-admin/SuperAdminSystemLogsPage';
 import SuperAdminReportsPage from './pages/super-admin/SuperAdminReportsPage';
+import SuperAdminDatabasePage from './pages/super-admin/SuperAdminDatabasePage';
+import SuperAdminSystemSettingsPage from './pages/super-admin/SuperAdminSystemSettingsPage';
 
 import RequireAuth from './components/layout/RequireAuth';
 
@@ -298,7 +300,22 @@ function App() {
             </RequireAuth>
           }
         />
-        {/* TODO Phase 5: /superadmin/database, /superadmin/system-settings */}
+        <Route
+          path="/superadmin/database"
+          element={
+            <RequireAuth role="superadmin">
+              <SuperAdminDatabasePage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/superadmin/system-settings"
+          element={
+            <RequireAuth role="superadmin">
+              <SuperAdminSystemSettingsPage />
+            </RequireAuth>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

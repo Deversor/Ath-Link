@@ -34,6 +34,7 @@ interface AuthState {
   isLoading: boolean;
   isInitialized: boolean;
   isProfileLoading: boolean;
+  maintenanceMode: boolean;
   error: string | null;
   failedAttempts: number;
   lockedUntil: number | null; // epoch ms, null when not locked
@@ -73,6 +74,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: false,
   isInitialized: false,
   isProfileLoading: false,
+  maintenanceMode: false,
   error: null,
   failedAttempts: 0,
   lockedUntil: null,
@@ -91,6 +93,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (data.session?.user) {
       await get().fetchProfile();
     }
+
+    const { data: setting } = await supabase
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'maintenance_mode')
+      .maybeSingle();
+    set({ maintenanceMode: setting?.value === 'true' });
 
     supabase.auth.onAuthStateChange((_event, session) => {
       set({ user: session?.user ?? null });

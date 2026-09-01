@@ -11,7 +11,8 @@ export default function RequireAuth({
   /** If set, only a profile with this role (or one of these roles) may see the page. */
   role?: AppRole | AppRole[];
 }) {
-  const { user, profile, isInitialized, isProfileLoading, isAdminVerified, init } = useAuthStore();
+  const { user, profile, isInitialized, isProfileLoading, isAdminVerified, maintenanceMode, init } =
+    useAuthStore();
 
   useEffect(() => {
     if (!isInitialized) {
@@ -52,6 +53,19 @@ export default function RequireAuth({
   // to every portal page immediately, even with a valid session.
   if (profile && profile.is_active === false) {
     return <Navigate to="/login?deactivated=1" replace />;
+  }
+
+  // Maintenance mode (Super Admin → System Settings) locks everyone except
+  // the Super Admin out of the portals until it's turned back off.
+  if (maintenanceMode && profile && profile.role !== 'superadmin') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-center px-6">
+        <p className="text-lg font-semibold text-neutral-800 mb-2">Ath-Link is under maintenance</p>
+        <p className="text-sm text-neutral-500 max-w-sm">
+          The Sports Office is performing scheduled maintenance. Please check back shortly.
+        </p>
+      </div>
+    );
   }
 
   // Privileged roles must clear the admin login-key step before reaching
