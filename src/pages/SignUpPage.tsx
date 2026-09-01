@@ -69,6 +69,11 @@ export default function SignUpPage() {
     if (success) {
       if (values.role === 'student') {
         await supabase.rpc('mark_athlete_whitelist_used', { p_email: values.email });
+        await supabase.rpc('log_activity', {
+          p_action_type: 'user_created',
+          p_entity_type: 'user',
+          p_description: `Created new student account for ${values.email}`,
+        });
         navigate('/profile-setup', {
           state: {
             fullName: values.fullName,
@@ -80,6 +85,11 @@ export default function SignUpPage() {
         await supabase.rpc('mark_coach_whitelist_used', {
           p_email: values.email,
           p_sport: values.sport,
+        });
+        await supabase.rpc('log_activity', {
+          p_action_type: 'user_created',
+          p_entity_type: 'user',
+          p_description: `Created new coach account for ${values.email} (${values.sport})`,
         });
         navigate('/coach-profile-setup', {
           state: {

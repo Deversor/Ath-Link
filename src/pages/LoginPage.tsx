@@ -6,6 +6,7 @@ import { Mail, Lock, Trophy, ShieldCheck, HelpCircle, X } from 'lucide-react';
 import { loginSchema, type LoginFormValues } from '../lib/schemas/loginSchema';
 import { useAuthStore } from '../store/useAuthStore';
 import { ROLE_HOME, isPrivilegedRole } from '../lib/roleHome';
+import { supabase } from '../lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -44,6 +45,11 @@ export default function LoginPage() {
     const { success } = await signIn(pendingValues.email, pendingValues.password);
     if (success) {
       setIsPrivacyModalOpen(false);
+      supabase.rpc('log_activity', {
+        p_action_type: 'user_login',
+        p_entity_type: 'auth',
+        p_description: `Successful login`,
+      });
 
       const profile = useAuthStore.getState().profile;
       if (profile && isPrivilegedRole(profile.role)) {

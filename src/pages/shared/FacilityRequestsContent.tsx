@@ -83,7 +83,21 @@ export function FacilityRequestsContent() {
   const history = reservations.filter((r) => r.status !== 'pending');
 
   const handleDecision = async (id: string, status: 'approved' | 'rejected') => {
+    const reservation = reservations.find((r) => r.id === id);
     await supabase.from('facility_reservations').update({ status }).eq('id', id);
+
+    if (reservation) {
+      const requesterName = reservation.is_manual
+        ? reservation.requester_name
+        : reservation.requesterProfile?.full_name;
+      await supabase.rpc('log_activity', {
+        p_action_type: status === 'approved' ? 'reservation_approved' : 'reservation_rejected',
+        p_entity_type: 'facility',
+        p_description: `${facilityName(reservation.facility_id)} · ${reservation.reservation_date} · ${
+          reservation.start_time}\u2013${reservation.end_time} · Requested by ${requesterName ?? 'Unknown'} · Purpose: ${reservation.purpose}`,
+      });
+    }
+
     setMessage(`Request ${status}.`);
     load();
   };

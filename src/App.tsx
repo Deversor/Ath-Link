@@ -40,6 +40,8 @@ import SuperAdminFacilityRequestsPage from './pages/super-admin/SuperAdminFacili
 import SuperAdminCoachSchedulesPage from './pages/super-admin/SuperAdminCoachSchedulesPage';
 import SuperAdminAthleteGalleryPage from './pages/super-admin/SuperAdminAthleteGalleryPage';
 import SuperAdminCoachManagementPage from './pages/super-admin/SuperAdminCoachManagementPage';
+import SuperAdminSystemLogsPage from './pages/super-admin/SuperAdminSystemLogsPage';
+import SuperAdminReportsPage from './pages/super-admin/SuperAdminReportsPage';
 
 import RequireAuth from './components/layout/RequireAuth';
 
@@ -280,7 +282,22 @@ function App() {
             </RequireAuth>
           }
         />
-        {/* TODO Phase 4: /superadmin/system-logs, /superadmin/reports */}
+        <Route
+          path="/superadmin/system-logs"
+          element={
+            <RequireAuth role="superadmin">
+              <SuperAdminSystemLogsPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/superadmin/reports"
+          element={
+            <RequireAuth role="superadmin">
+              <SuperAdminReportsPage />
+            </RequireAuth>
+          }
+        />
         {/* TODO Phase 5: /superadmin/database, /superadmin/system-settings */}
       </Routes>
     </BrowserRouter>
