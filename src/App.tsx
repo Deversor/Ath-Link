@@ -45,6 +45,13 @@ import SuperAdminReportsPage from './pages/super-admin/SuperAdminReportsPage';
 import SuperAdminDatabasePage from './pages/super-admin/SuperAdminDatabasePage';
 import SuperAdminSystemSettingsPage from './pages/super-admin/SuperAdminSystemSettingsPage';
 
+// Registrar portal
+import RegistrarDashboardPage from './pages/registrar/RegistrarDashboardPage';
+import RegistrarGwaCalculatorPage from './pages/registrar/RegistrarGwaCalculatorPage';
+import RegistrarApprovedAthletesPage from './pages/registrar/RegistrarApprovedAthletesPage';
+import RegistrarVerificationHistoryPage from './pages/registrar/RegistrarVerificationHistoryPage';
+import RegistrarProfileSettingsPage from './pages/registrar/RegistrarProfileSettingsPage';
+
 import RequireAuth from './components/layout/RequireAuth';
 
 function App() {
@@ -313,6 +320,48 @@ function App() {
           element={
             <RequireAuth role="superadmin">
               <SuperAdminSystemSettingsPage />
+            </RequireAuth>
+          }
+        />
+
+        {/* ── Registrar portal ── */}
+        <Route
+          path="/registrar/dashboard"
+          element={
+            <RequireAuth role="registrar">
+              <RegistrarDashboardPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/registrar/gwa-calculator"
+          element={
+            <RequireAuth role="registrar">
+              <RegistrarGwaCalculatorPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/registrar/approved-athletes"
+          element={
+            <RequireAuth role="registrar">
+              <RegistrarApprovedAthletesPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/registrar/verification-history"
+          element={
+            <RequireAuth role="registrar">
+              <RegistrarVerificationHistoryPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/registrar/profile-settings"
+          element={
+            <RequireAuth role="registrar">
+              <RegistrarProfileSettingsPage />
             </RequireAuth>
           }
         />
