@@ -38,7 +38,7 @@ export default function RegistrarDashboardPage() {
       .from('profiles')
       .select('id, full_name, student_id, sport, position, year_level, document_compile_status')
       .eq('role', 'student')
-      .in('document_compile_status', ['sent_to_registrar', 'revision_requested']);
+      .in('document_compile_status', ['sent_to_registrar']);
 
     const ids = (profiles ?? []).map((p) => p.id);
     let docsByAthlete: Record<string, string[]> = {};
@@ -78,9 +78,16 @@ export default function RegistrarDashboardPage() {
     load();
   };
 
-  const handleRequestRevision = async (athleteId: string) => {
-    await supabase.from('profiles').update({ document_compile_status: 'revision_requested' }).eq('id', athleteId);
-    setMessage('Revision requested — the coach will need to resubmit.');
+  const [revisionTarget, setRevisionTarget] = useState<Athlete | null>(null);
+
+  const submitRevision = async (reason: string) => {
+    if (!revisionTarget) return;
+    await supabase
+      .from('profiles')
+      .update({ document_compile_status: 'not_ready', revision_note: reason })
+      .eq('id', revisionTarget.id);
+    setMessage(`Revision requested for ${revisionTarget.full_name} — sent back to their coach with your note.`);
+    setRevisionTarget(null);
     load();
   };
 
@@ -207,7 +214,7 @@ export default function RegistrarDashboardPage() {
                             <Button
                               type="button"
                               className="text-xs h-8 bg-red-600 hover:bg-red-700"
-                              onClick={() => handleRequestRevision(a.id)}
+                              onClick={() => setRevisionTarget(a)}
                             >
                               <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
                               Request Revision
@@ -231,6 +238,59 @@ export default function RegistrarDashboardPage() {
           </div>
         )}
       </div>
+
+      {revisionTarget && (
+        <RevisionModal
+          athleteName={revisionTarget.full_name}
+          onClose={() => setRevisionTarget(null)}
+          onSubmit={submitRevision}
+        />
+      )}
     </RegistrarPortalLayout>
+  );
+}
+
+function RevisionModal({
+  athleteName,
+  onClose,
+  onSubmit,
+}: {
+  athleteName: string;
+  onClose: () => void;
+  onSubmit: (reason: string) => void;
+}) {
+  const [reason, setReason] = useState('');
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative w-full max-w-sm rounded-xl bg-white shadow-xl p-6">
+        <h3 className="font-semibold text-neutral-900 mb-1">Request Revision</h3>
+        <p className="text-xs text-neutral-500 mb-4">
+          This sends {athleteName} back through their coach for corrections — they'll need to re-compile and re-submit
+          through Staff Admin before reaching you again.
+        </p>
+        <textarea
+          rows={3}
+          placeholder="What needs to be fixed? (shown to the coach)"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          className="w-full px-3 py-2.5 rounded-lg bg-neutral-100 border border-transparent focus:border-orange-500 outline-none text-sm resize-none mb-4"
+        />
+        <div className="flex gap-3">
+          <Button
+            type="button"
+            className="flex-1 bg-red-600 hover:bg-red-700"
+            disabled={!reason.trim()}
+            onClick={() => onSubmit(reason)}
+          >
+            Send Back
+          </Button>
+          <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
+            Cancel
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }

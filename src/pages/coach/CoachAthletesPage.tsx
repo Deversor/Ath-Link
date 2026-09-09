@@ -20,6 +20,7 @@ interface Athlete {
   email: string;
   position: string | null;
   document_compile_status: string;
+  revision_note: string | null;
   uploadedCount: number;
 }
 
@@ -37,7 +38,7 @@ export default function CoachAthletesPage() {
 
     const { data: roster } = await supabase
       .from('profiles')
-      .select('id, full_name, email, position, document_compile_status')
+      .select('id, full_name, email, position, document_compile_status, revision_note')
       .eq('role', 'student')
       .eq('sport', sport);
 
@@ -79,7 +80,7 @@ export default function CoachAthletesPage() {
   const handleCompile = async (athleteId: string) => {
     await supabase
       .from('profiles')
-      .update({ document_compile_status: 'compiled' })
+      .update({ document_compile_status: 'compiled', revision_note: null })
       .eq('id', athleteId);
     loadAthletes();
   };
@@ -186,22 +187,35 @@ export default function CoachAthletesPage() {
                 {athletes.map((a) => (
                   <div
                     key={a.id}
-                    className="flex items-center justify-between rounded-lg border border-neutral-100 bg-neutral-50 px-4 py-3"
+                    className={`rounded-lg border px-4 py-3 ${
+                      a.revision_note ? 'border-red-200 bg-red-50' : 'border-neutral-100 bg-neutral-50'
+                    }`}
                   >
-                    <div>
-                      <p className="text-sm font-medium text-neutral-800">{a.full_name}</p>
-                      <p className="text-xs text-neutral-500">{a.email}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-neutral-500">{a.uploadedCount}/5 uploaded</span>
-                      <Button
-                        type="button"
-                        disabled={a.uploadedCount < 5 || a.document_compile_status !== 'not_ready'}
-                        onClick={() => handleCompile(a.id)}
-                        className="bg-green-600 hover:bg-green-700 disabled:bg-neutral-200 text-xs h-8"
-                      >
-                        {a.document_compile_status === 'not_ready' ? 'Compile' : 'Compiled'}
-                      </Button>
+                    {a.revision_note && (
+                      <p className="text-xs font-medium text-red-700 mb-2">
+                        ⚠ Sent back for revision by the Registrar: "{a.revision_note}"
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-neutral-800">{a.full_name}</p>
+                        <p className="text-xs text-neutral-500">{a.email}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-neutral-500">{a.uploadedCount}/5 uploaded</span>
+                        <Button
+                          type="button"
+                          disabled={a.uploadedCount < 5 || a.document_compile_status !== 'not_ready'}
+                          onClick={() => handleCompile(a.id)}
+                          className="bg-green-600 hover:bg-green-700 disabled:bg-neutral-200 text-xs h-8"
+                        >
+                          {a.document_compile_status === 'not_ready'
+                            ? a.revision_note
+                              ? 'Re-compile'
+                              : 'Compile'
+                            : 'Compiled'}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}

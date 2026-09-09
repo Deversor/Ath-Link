@@ -38,7 +38,7 @@ export default function RegistrarVerificationHistoryPage() {
         .from('profiles')
         .select('id, full_name, student_id, sport, year_level, document_compile_status')
         .eq('role', 'student')
-        .in('document_compile_status', ['sent_to_registrar', 'registrar_approved', 'revision_requested']);
+        .in('document_compile_status', ['sent_to_registrar', 'registrar_approved']);
       setProfiles(profs ?? []);
 
       const { data: records } = await supabase
