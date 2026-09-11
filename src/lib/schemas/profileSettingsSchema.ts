@@ -5,7 +5,7 @@ export const profileSettingsSchema = z.object({
   lastName: z.string().min(1, 'Last name is required'),
   phoneNumber: z.string().min(1, 'Phone number is required'),
   emergencyContact: z.string().min(1, 'Emergency contact is required'),
-  age: z.number({ invalid_type_error: 'Age is required' }).min(14).max(60),
+  age: z.number({ error: 'Age is required' }).min(14).max(60),
   bloodType: z.string().optional(),
   heightCm: z.number().optional(),
   weightKg: z.number().optional(),

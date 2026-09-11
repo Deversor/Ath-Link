@@ -25,6 +25,7 @@ export interface Profile {
   specialization: string | null;
   years_experience: number | null;
   department: string | null;
+  position: string | null;
   is_active: boolean;
 }
 

@@ -6,7 +6,7 @@ export const facilityReservationSchema = z.object({
   endTime: z.string().min(1, 'End time is required'),
   expectedAttendees: z.number().optional(),
   agree: z.literal(true, {
-    errorMap: () => ({ message: 'You must agree to the facility use policies' }),
+    error: 'You must agree to the facility use policies',
   }),
 });
 

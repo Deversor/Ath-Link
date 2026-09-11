@@ -33,7 +33,7 @@ export default function ProfileSettingsPage() {
         lastName: profile.last_name ?? '',
         phoneNumber: profile.phone_number ?? '',
         emergencyContact: profile.emergency_contact_name ?? '',
-        age: profile.age,
+        age: profile.age ?? undefined,
         bloodType: profile.blood_type ?? '',
         heightCm: profile.height_cm ?? undefined,
         weightKg: profile.weight_kg ?? undefined,

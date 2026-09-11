@@ -11,7 +11,7 @@ export const adminSignupSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   role: z.enum(['staff_admin', 'registrar', 'superadmin'], {
-    errorMap: () => ({ message: 'Please select a role' }),
+    error: 'Please select a role',
   }),
 });
 

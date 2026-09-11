@@ -13,7 +13,7 @@ const coachSettingsSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   specialization: z.string().min(1, 'Specialization is required'),
-  yearsExperience: z.number({ invalid_type_error: 'Required' }).min(0),
+  yearsExperience: z.number({ error: 'Required' }).min(0),
   phoneNumber: z.string().min(1, 'Contact number is required'),
 });
 

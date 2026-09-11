@@ -37,7 +37,7 @@ export const signupSchema = z
       }),
     password: z.string().min(8, 'Password must be at least 8 characters'),
     role: z.enum(['student', 'coach'], {
-      errorMap: () => ({ message: 'Please select a role' }),
+      error: 'Please select a role',
     }),
     sport: z.string().optional(),
   })

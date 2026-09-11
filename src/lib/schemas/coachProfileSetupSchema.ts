@@ -6,7 +6,7 @@ export const coachProfileSetupSchema = z.object({
   phoneNumber: z.string().min(1, 'Contact number is required'),
   specialization: z.string().min(1, 'Please list your specialization'),
   yearsExperience: z
-    .number({ invalid_type_error: 'Years of experience is required' })
+    .number({ error: 'Years of experience is required' })
     .min(0, 'Enter a valid number of years'),
 });
 

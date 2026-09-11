@@ -427,7 +427,7 @@ function ReservationModal({
               <Controller
                 name="agree"
                 control={control}
-                defaultValue={false as unknown as true}
+                defaultValue={false as any}
                 render={({ field }) => (
                   <Checkbox
                     id="agree"

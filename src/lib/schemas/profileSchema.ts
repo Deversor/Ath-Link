@@ -8,7 +8,7 @@ export const profileSchema = z.object({
   yearLevel: z.string().min(1, 'Year level is required'),
   course: z.string().min(1, 'Course is required'),
   age: z
-    .number({ invalid_type_error: 'Age is required' })
+    .number({ error: 'Age is required' })
     .min(14, 'Age must be at least 14')
     .max(60, 'Enter a valid age'),
   position: z.string().optional(),
