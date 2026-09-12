@@ -58,49 +58,48 @@ export default function SignUpPage() {
       }
     }
 
-    const { success } = await signUp({
+    const redirectTo =
+      values.role === 'student'
+        ? `${window.location.origin}/profile-setup`
+        : `${window.location.origin}/coach-profile-setup`;
+
+    const { success, hasSession } = await signUp({
       email: values.email,
       password: values.password,
       fullName: values.fullName,
       role: values.role,
       sport: values.sport,
+      emailRedirectTo: redirectTo,
     });
 
-    if (success) {
-      if (values.role === 'student') {
-        await supabase.rpc('mark_athlete_whitelist_used', { p_email: values.email });
-        await supabase.rpc('log_activity', {
-          p_action_type: 'user_created',
-          p_entity_type: 'user',
-          p_description: `Created new student account for ${values.email}`,
-        });
-        navigate('/profile-setup', {
-          state: {
-            fullName: values.fullName,
-            email: values.email,
-            sport: values.sport,
-          },
-        });
-      } else if (values.role === 'coach') {
-        await supabase.rpc('mark_coach_whitelist_used', {
-          p_email: values.email,
-          p_sport: values.sport,
-        });
-        await supabase.rpc('log_activity', {
-          p_action_type: 'user_created',
-          p_entity_type: 'user',
-          p_description: `Created new coach account for ${values.email} (${values.sport})`,
-        });
-        navigate('/coach-profile-setup', {
-          state: {
-            fullName: values.fullName,
-            email: values.email,
-            sport: values.sport,
-          },
-        });
-      } else {
-        navigate('/login');
-      }
+    if (!success) return;
+
+    if (!hasSession) {
+      // Email confirmation is required — nothing authenticated can happen
+      // yet. Whitelist-marking and profile creation happen once they
+      // confirm and land back here with a real session.
+      navigate('/check-email', { state: { email: values.email } });
+      return;
+    }
+
+    if (values.role === 'student') {
+      navigate('/profile-setup', {
+        state: {
+          fullName: values.fullName,
+          email: values.email,
+          sport: values.sport,
+        },
+      });
+    } else if (values.role === 'coach') {
+      navigate('/coach-profile-setup', {
+        state: {
+          fullName: values.fullName,
+          email: values.email,
+          sport: values.sport,
+        },
+      });
+    } else {
+      navigate('/login');
     }
   };
 

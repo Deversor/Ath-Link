@@ -56,7 +56,8 @@ interface AuthState {
     fullName: string;
     role: 'student' | 'coach';
     sport?: string;
-  }) => Promise<{ success: boolean }>;
+    emailRedirectTo?: string;
+  }) => Promise<{ success: boolean; hasSession: boolean }>;
   verifyAdminKey: (key: string) => Promise<{ success: boolean }>;
   signOut: () => Promise<void>;
   clearError: () => void;
@@ -205,13 +206,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     return { success: true };
   },
 
-  signUp: async ({ email, password, fullName, role, sport }) => {
+  signUp: async ({ email, password, fullName, role, sport, emailRedirectTo }) => {
     set({ isLoading: true, error: null });
 
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo,
         data: {
           full_name: fullName,
           role,
@@ -222,11 +224,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     if (error) {
       set({ isLoading: false, error: error.message });
-      return { success: false };
+      return { success: false, hasSession: false };
     }
 
+    // If email confirmation is required, Supabase returns a user but no
+    // session yet — there's nothing authenticated to do until they confirm.
     set({ user: data.user, isLoading: false, error: null });
-    return { success: true };
+    return { success: true, hasSession: !!data.session };
   },
 
   verifyAdminKey: async (key) => {

@@ -7,6 +7,8 @@ import AdminVerifyPage from './pages/AdminVerifyPage';
 import AdminSignUpPage from './pages/AdminSignUpPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import CheckEmailPage from './pages/CheckEmailPage';
+import CompleteAdminSignUpPage from './pages/CompleteAdminSignUpPage';
 
 // Student portal
 import DashboardPage from './pages/portal/DashboardPage';
@@ -69,6 +71,8 @@ function App() {
         <Route path="/admin-signup" element={<AdminSignUpPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/check-email" element={<CheckEmailPage />} />
+        <Route path="/complete-admin-signup" element={<CompleteAdminSignUpPage />} />
 
         {/* ── Student portal ── */}
         <Route

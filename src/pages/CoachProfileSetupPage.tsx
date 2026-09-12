@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Trophy, User as UserIcon } from 'lucide-react';
 import {
   coachProfileSetupSchema,
@@ -25,20 +25,46 @@ export default function CoachProfileSetupPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const handoff = (location.state ?? {}) as HandoffState;
-  const { user, fetchProfile } = useAuthStore();
+  const { user, fetchProfile, isInitialized, init } = useAuthStore();
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Same two entry paths as the student version: straight from sign-up
+  // (handoff has everything) or via the confirmation email link (fresh
+  // page load — need to establish the session first).
+  useEffect(() => {
+    if (!isInitialized) init();
+  }, [isInitialized, init]);
+
+  const fallbackFullName = (user?.user_metadata?.full_name as string) ?? '';
+  const fallbackSport = (user?.user_metadata?.sport as string) ?? '';
+  const effectiveFullName = handoff.fullName ?? fallbackFullName;
+  const effectiveSport = handoff.sport ?? fallbackSport;
+  const effectiveEmail = handoff.email ?? user?.email ?? '';
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<CoachProfileSetupValues>({
     resolver: zodResolver(coachProfileSetupSchema),
     defaultValues: {
-      firstName: handoff.fullName?.split(' ')[0] ?? '',
-      lastName: handoff.fullName?.split(' ').slice(1).join(' ') ?? '',
+      firstName: effectiveFullName.split(' ')[0] ?? '',
+      lastName: effectiveFullName.split(' ').slice(1).join(' ') ?? '',
     },
   });
+
+  // Fill in the name once the session/metadata loads on the
+  // confirmation-link path (router state won't have it that way).
+  useEffect(() => {
+    if (user && !handoff.fullName && fallbackFullName) {
+      reset({
+        firstName: fallbackFullName.split(' ')[0] ?? '',
+        lastName: fallbackFullName.split(' ').slice(1).join(' ') ?? '',
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const onSubmit = async (values: CoachProfileSetupValues) => {
     if (!user) {
@@ -56,9 +82,9 @@ export default function CoachProfileSetupPage() {
       phone_number: values.phoneNumber,
       specialization: values.specialization,
       years_experience: values.yearsExperience,
-      sport: handoff.sport ?? null,
+      sport: effectiveSport || null,
       role: 'coach',
-      email: handoff.email ?? user.email ?? '',
+      email: effectiveEmail,
     });
 
     if (upsertError) {
@@ -66,9 +92,31 @@ export default function CoachProfileSetupPage() {
       return;
     }
 
+    // Session is now guaranteed real — safe to mark the whitelist entry
+    // used and log the account creation.
+    if (effectiveEmail && effectiveSport) {
+      await supabase.rpc('mark_coach_whitelist_used', {
+        p_email: effectiveEmail,
+        p_sport: effectiveSport,
+      });
+    }
+    await supabase.rpc('log_activity', {
+      p_action_type: 'user_created',
+      p_entity_type: 'user',
+      p_description: `Created new coach account for ${effectiveEmail} (${effectiveSport})`,
+    });
+
     await fetchProfile();
     navigate('/coach/dashboard');
   };
+
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-neutral-400 text-sm">
+        Verifying your account…
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white">

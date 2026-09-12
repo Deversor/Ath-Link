@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { User as UserIcon, Trophy } from 'lucide-react';
 import { profileSchema, type ProfileFormValues } from '../lib/schemas/profileSchema';
 import { useSports } from '../hooks/useSports';
@@ -24,12 +24,21 @@ export default function ProfileSetupPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const handoff = (location.state ?? {}) as HandoffState;
-  const { user } = useAuthStore();
+  const { user, isInitialized, init } = useAuthStore();
   const [saveError, setSaveError] = useState<string | null>(null);
+
+
+  useEffect(() => {
+    if (!isInitialized) init();
+  }, [isInitialized, init]);
+
+  const fallbackFullName = (user?.user_metadata?.full_name as string) ?? '';
+  const fallbackSport = (user?.user_metadata?.sport as string) ?? '';
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -39,6 +48,19 @@ export default function ProfileSetupPage() {
       sport: handoff.sport ?? '',
     },
   });
+
+  // Once the session/user loads (the email-confirmation-link path), fill
+  // in whatever the router state didn't already provide.
+  useEffect(() => {
+    if (user && !handoff.fullName) {
+      reset({
+        fullName: fallbackFullName,
+        email: user.email ?? '',
+        sport: fallbackSport,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const onSubmit = async (values: ProfileFormValues) => {
     setSaveError(null);
@@ -70,8 +92,25 @@ export default function ProfileSetupPage() {
       return;
     }
 
+    // Now that a real session definitely exists, it's safe to mark the
+    // whitelist entry used and log the account creation.
+    await supabase.rpc('mark_athlete_whitelist_used', { p_email: values.email });
+    await supabase.rpc('log_activity', {
+      p_action_type: 'user_created',
+      p_entity_type: 'user',
+      p_description: `Created new student account for ${values.email}`,
+    });
+
     navigate('/dashboard');
   };
+
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-neutral-400 text-sm">
+        Verifying your account…
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white">

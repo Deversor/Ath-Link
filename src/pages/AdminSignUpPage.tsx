@@ -24,10 +24,24 @@ export default function AdminSignUpPage() {
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/complete-admin-signup`,
+        data: {
+          full_name: values.fullName,
+          role: values.role,
+        },
+      },
     });
 
     if (signUpError || !data.user) {
       setError('email', { message: signUpError?.message ?? 'Could not create account.' });
+      return;
+    }
+
+    if (!data.session) {
+      // Email confirmation is required — the whitelist claim needs a real
+      // session, so it happens on /complete-admin-signup once they confirm.
+      navigate('/check-email', { state: { email: values.email } });
       return;
     }
 
