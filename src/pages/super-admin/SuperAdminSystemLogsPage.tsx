@@ -29,6 +29,8 @@ const ACTION_LABEL: Record<string, string> = {
   user_created: 'User Created',
   reservation_approved: 'Reservation Approved',
   reservation_rejected: 'Reservation Rejected',
+  reservation_stage1_approved: 'Reservation Initially Approved',
+  reservation_confirmed: 'Reservation Confirmed',
 };
 
 export default function SuperAdminSystemLogsPage() {

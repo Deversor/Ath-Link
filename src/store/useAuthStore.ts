@@ -54,7 +54,7 @@ interface AuthState {
     email: string;
     password: string;
     fullName: string;
-    role: 'student' | 'coach';
+    role: 'student' | 'coach' | 'facility_requester';
     sport?: string;
     emailRedirectTo?: string;
   }) => Promise<{ success: boolean; hasSession: boolean }>;

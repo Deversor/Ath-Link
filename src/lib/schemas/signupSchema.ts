@@ -23,6 +23,7 @@ export const SPORTS_LIST = [
 export const ROLES = [
   { value: 'student', label: 'Student Athlete' },
   { value: 'coach', label: 'Coach' },
+  { value: 'facility_requester', label: 'Facility Requester' },
 ] as const;
 
 export const signupSchema = z
@@ -36,7 +37,7 @@ export const signupSchema = z
         message: `Email must be a ${INSTITUTIONAL_DOMAIN} address`,
       }),
     password: z.string().min(8, 'Password must be at least 8 characters'),
-    role: z.enum(['student', 'coach'], {
+    role: z.enum(['student', 'coach', 'facility_requester'], {
       error: 'Please select a role',
     }),
     sport: z.string().optional(),

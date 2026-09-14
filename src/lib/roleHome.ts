@@ -1,4 +1,4 @@
-export type AppRole = 'student' | 'coach' | 'staff_admin' | 'registrar' | 'superadmin';
+export type AppRole = 'student' | 'coach' | 'staff_admin' | 'registrar' | 'superadmin' | 'facility_requester';
 
 export const ROLE_HOME: Record<AppRole, string> = {
   student: '/dashboard',
@@ -6,6 +6,7 @@ export const ROLE_HOME: Record<AppRole, string> = {
   staff_admin: '/staff-admin/dashboard',
   registrar: '/registrar/dashboard',
   superadmin: '/superadmin/dashboard',
+  facility_requester: '/facility-reservation',
 };
 
 export const PRIVILEGED_ROLES: AppRole[] = ['staff_admin', 'registrar', 'superadmin'];

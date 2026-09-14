@@ -55,18 +55,19 @@ export default function LoginPage() {
       if (profile && isPrivilegedRole(profile.role)) {
         navigate('/admin-verify');
       } else if (profile) {
-        navigate(ROLE_HOME[profile.role]);
+        const pending = sessionStorage.getItem('pendingReservationIntent');
+        navigate(pending ? '/facility-reservation/reserve' : ROLE_HOME[profile.role]);
       }
     }
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-white">
+    <div className="min-h-screen w-full flex flex-col md:flex-row bg-white">
       {/* Left panel — branding */}
-      <div className="relative lg:w-1/2 flex flex-col justify-center px-10 py-16 lg:py-0 bg-gradient-to-br from-neutral-950 via-neutral-900 to-orange-950 text-white overflow-hidden">
+      <div className="relative md:w-1/2 flex flex-col justify-center px-6 sm:px-10 py-10 md:py-16 lg:py-0 bg-gradient-to-br from-neutral-950 via-neutral-900 to-orange-950 text-white overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-1 bg-orange-500" />
 
-        <div className="flex items-center gap-2 mb-16">
+        <div className="flex items-center gap-2 mb-8 md:mb-16">
           <div className="w-9 h-9 rounded-lg bg-orange-500 flex items-center justify-center">
             <Trophy className="w-5 h-5 text-white" />
           </div>
@@ -75,7 +76,7 @@ export default function LoginPage() {
           </span>
         </div>
 
-        <h1 className="text-4xl lg:text-5xl font-bold leading-tight mb-6 max-w-md">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-6 max-w-md">
           Your Gateway to <span className="text-orange-500">Athletic Excellence</span>
         </h1>
 
@@ -95,7 +96,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right panel — form */}
-      <div className="lg:w-1/2 flex items-center justify-center px-6 py-16">
+      <div className="md:w-1/2 flex items-center justify-center px-6 py-10 md:py-16">
         <div className="w-full max-w-sm">
           <h2 className="text-2xl font-bold text-neutral-900 mb-1">Welcome back</h2>
           <p className="text-neutral-500 mb-8">Sign in to your portal account.</p>
@@ -174,9 +175,9 @@ export default function LoginPage() {
             </Link>
           </p>
           <p className="text-center text-sm mt-2">
-            <a href="/facility-booking" className="text-neutral-500 underline hover:text-neutral-700">
+            <Link to="/facility-reservation" className="text-neutral-500 underline hover:text-neutral-700">
               Facility Booking Portal
-            </a>
+            </Link>
           </p>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Users, FileText, GraduationCap, ChevronDown, ChevronRight, Eye, Check, RotateCcw } from 'lucide-react';
 import RegistrarPortalLayout from '../../components/layout/RegistrarPortalLayout';
+import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
 import { Button } from '@/components/ui/button';
 
@@ -29,6 +30,7 @@ interface SportGroup {
 }
 
 export default function RegistrarDashboardPage() {
+  const { user } = useAuthStore();
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [expandedSport, setExpandedSport] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -86,6 +88,26 @@ export default function RegistrarDashboardPage() {
       .from('profiles')
       .update({ document_compile_status: 'not_ready', revision_note: reason })
       .eq('id', revisionTarget.id);
+
+    // Notify the coach who handles this sport — they're the one who needs
+    // to see the revision request and get the athlete resubmitted.
+    if (revisionTarget.sport) {
+      const { data: coach } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'coach')
+        .eq('sport', revisionTarget.sport)
+        .maybeSingle();
+
+      if (coach) {
+        await supabase.from('notifications').insert({
+          user_id: coach.id,
+          message: `${revisionTarget.full_name}'s documents were sent back for revision: "${reason}"`,
+          sent_by: user?.id,
+        });
+      }
+    }
+
     setMessage(`Revision requested for ${revisionTarget.full_name} — sent back to their coach with your note.`);
     setRevisionTarget(null);
     load();

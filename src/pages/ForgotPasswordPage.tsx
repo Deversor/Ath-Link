@@ -33,10 +33,10 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-white">
-      <div className="relative lg:w-1/2 flex flex-col justify-center px-10 py-16 lg:py-0 bg-gradient-to-br from-neutral-950 via-neutral-900 to-orange-950 text-white overflow-hidden">
+    <div className="min-h-screen w-full flex flex-col md:flex-row bg-white">
+      <div className="relative md:w-1/2 flex flex-col justify-center px-6 sm:px-10 py-10 md:py-16 lg:py-0 bg-gradient-to-br from-neutral-950 via-neutral-900 to-orange-950 text-white overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-1 bg-orange-500" />
-        <div className="flex items-center gap-2 mb-16">
+        <div className="flex items-center gap-2 mb-8 md:mb-16">
           <div className="w-9 h-9 rounded-lg bg-orange-500 flex items-center justify-center">
             <Trophy className="w-5 h-5 text-white" />
           </div>
@@ -44,7 +44,7 @@ export default function ForgotPasswordPage() {
             PalawanSU <span className="text-orange-500">AthLink</span>
           </span>
         </div>
-        <h1 className="text-4xl lg:text-5xl font-bold leading-tight mb-6 max-w-md">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-6 max-w-md">
           Your Gateway to <span className="text-orange-500">Athletic Excellence</span>
         </h1>
         <p className="text-neutral-400 max-w-sm mb-10">
@@ -56,7 +56,7 @@ export default function ForgotPasswordPage() {
         </div>
       </div>
 
-      <div className="lg:w-1/2 flex items-center justify-center px-6 py-16">
+      <div className="md:w-1/2 flex items-center justify-center px-6 py-10 md:py-16">
         <div className="w-full max-w-sm">
           <div className="w-12 h-12 rounded-lg bg-orange-50 flex items-center justify-center mb-5">
             <Mail className="w-6 h-6 text-orange-500" />

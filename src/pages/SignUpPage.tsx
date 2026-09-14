@@ -61,7 +61,9 @@ export default function SignUpPage() {
     const redirectTo =
       values.role === 'student'
         ? `${window.location.origin}/profile-setup`
-        : `${window.location.origin}/coach-profile-setup`;
+        : values.role === 'coach'
+        ? `${window.location.origin}/coach-profile-setup`
+        : `${window.location.origin}/complete-facility-requester-signup`;
 
     const { success, hasSession } = await signUp({
       email: values.email,
@@ -98,6 +100,19 @@ export default function SignUpPage() {
           sport: values.sport,
         },
       });
+    } else if (values.role === 'facility_requester') {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const uid = sessionData.session?.user.id;
+      if (uid) {
+        await supabase.from('profiles').upsert({
+          id: uid,
+          email: values.email,
+          full_name: values.fullName,
+          role: 'facility_requester',
+        });
+      }
+      const pending = sessionStorage.getItem('pendingReservationIntent');
+      navigate(pending ? '/facility-reservation/reserve' : '/facility-reservation');
     } else {
       navigate('/login');
     }

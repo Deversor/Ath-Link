@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
+import PublicFacilityBookingPage from './pages/PublicFacilityBookingPage';
+import FacilityReservationFormPage from './pages/FacilityReservationFormPage';
 import SignUpPage from './pages/SignUpPage';
 import ProfileSetupPage from './pages/ProfileSetupPage';
 import CoachProfileSetupPage from './pages/CoachProfileSetupPage';
@@ -9,20 +11,19 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import CheckEmailPage from './pages/CheckEmailPage';
 import CompleteAdminSignUpPage from './pages/CompleteAdminSignUpPage';
+import CompleteFacilityRequesterSignUpPage from './pages/CompleteFacilityRequesterSignUpPage';
 
 // Student portal
 import DashboardPage from './pages/portal/DashboardPage';
 import ProfileSettingsPage from './pages/portal/ProfileSettingsPage';
 import DocumentsPage from './pages/portal/DocumentsPage';
 import SchedulesPage from './pages/portal/SchedulesPage';
-import FacilityReservationPage from './pages/portal/FacilityReservationPage';
 
 // Coach portal
 import CoachDashboardPage from './pages/coach/CoachDashboardPage';
 import CoachProfileSettingsPage from './pages/coach/CoachProfileSettingsPage';
 import CoachAthletesPage from './pages/coach/CoachAthletesPage';
 import CoachSchedulesPage from './pages/coach/CoachSchedulesPage';
-import CoachFacilityReservationPage from './pages/coach/CoachFacilityReservationPage';
 import CoachReportsPage from './pages/coach/CoachReportsPage';
 
 // Staff Admin portal
@@ -64,6 +65,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/facility-reservation" element={<PublicFacilityBookingPage />} />
+        <Route path="/facility-reservation/reserve" element={<FacilityReservationFormPage />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/profile-setup" element={<ProfileSetupPage />} />
         <Route path="/coach-profile-setup" element={<CoachProfileSetupPage />} />
@@ -73,6 +76,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/check-email" element={<CheckEmailPage />} />
         <Route path="/complete-admin-signup" element={<CompleteAdminSignUpPage />} />
+        <Route path="/complete-facility-requester-signup" element={<CompleteFacilityRequesterSignUpPage />} />
 
         {/* ── Student portal ── */}
         <Route
@@ -104,14 +108,6 @@ function App() {
           element={
             <RequireAuth role="student">
               <SchedulesPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/facility-reservation"
-          element={
-            <RequireAuth role="student">
-              <FacilityReservationPage />
             </RequireAuth>
           }
         />
@@ -150,14 +146,6 @@ function App() {
           }
         />
         <Route
-          path="/coach/facility-reservation"
-          element={
-            <RequireAuth role="coach">
-              <CoachFacilityReservationPage />
-            </RequireAuth>
-          }
-        />
-        <Route
           path="/coach/reports"
           element={
             <RequireAuth role="coach">
@@ -165,7 +153,6 @@ function App() {
             </RequireAuth>
           }
         />
-        {/* TODO Phase 2: /coach/athletes, /coach/schedules, /coach/facility-reservation, /coach/reports */}
 
         {/* ── Staff Admin portal ── */}
         <Route
