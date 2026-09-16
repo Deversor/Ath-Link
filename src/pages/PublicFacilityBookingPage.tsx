@@ -180,7 +180,7 @@ export default function PublicFacilityBookingPage() {
   return (
     <div className="min-h-screen bg-neutral-50">
       <header className="bg-neutral-950 text-white">
-        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center">
               <Trophy className="w-4 h-4 text-white" />
@@ -189,10 +189,10 @@ export default function PublicFacilityBookingPage() {
               PalawanSU <span className="text-orange-500">AthLink</span>
             </span>
           </div>
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex items-center gap-2 sm:gap-3 text-sm">
             {user && profile ? (
               <>
-                <span className="text-neutral-300">
+                <span className="hidden sm:inline text-neutral-300 truncate max-w-[160px]">
                   {profile.full_name} {profile.department ? `· ${profile.department}` : ''}
                 </span>
                 <NotificationsBell />
@@ -204,7 +204,7 @@ export default function PublicFacilityBookingPage() {
                   className="flex items-center gap-1 text-neutral-300 hover:text-white"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  Logout
+                  <span className="hidden sm:inline">Logout</span>
                 </button>
               </>
             ) : (
@@ -222,7 +222,7 @@ export default function PublicFacilityBookingPage() {
       </header>
 
       <div className="bg-gradient-to-r from-orange-500 to-orange-400 text-white">
-        <div className="max-w-6xl mx-auto px-6 py-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
           <h1 className="flex items-center gap-2 text-xl md:text-2xl font-bold">
             <Building2 className="w-6 h-6" />
             PalSU Facility Booking Portal
@@ -235,7 +235,7 @@ export default function PublicFacilityBookingPage() {
         </div>
       </div>
 
-      <main className="max-w-6xl mx-auto px-6 py-6 space-y-4">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-4">
         {user && (
           <div className="flex gap-2">
             <button
@@ -343,13 +343,13 @@ export default function PublicFacilityBookingPage() {
           />
         </div>
 
-        <div className="flex flex-wrap gap-1 border-b border-neutral-200">
+        <div className="flex gap-1 overflow-x-auto border-b border-neutral-200 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {filteredFacilities.map((f) => (
             <button
               key={f.id}
               type="button"
               onClick={() => setActiveFacility(f)}
-              className={`px-3 py-2 text-sm font-medium rounded-t-lg ${
+              className={`shrink-0 whitespace-nowrap px-3 py-2 text-sm font-medium rounded-t-lg ${
                 activeFacility?.id === f.id ? 'bg-orange-500 text-white' : 'text-neutral-500 hover:bg-neutral-100'
               }`}
             >

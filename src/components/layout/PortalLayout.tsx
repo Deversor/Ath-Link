@@ -7,7 +7,7 @@ const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/documents', label: 'Documents', icon: FileText },
   { to: '/schedules', label: 'Schedules', icon: Calendar },
-  { to: '/facility-reservation', label: 'Facility Reservation', icon: Building2 },
+  { to: '/facility-reservation', label: 'Facility Reservation', mobileLabel: 'Facility', icon: Building2 },
 ];
 
 export default function PortalLayout({ children }: { children: ReactNode }) {
@@ -25,6 +25,7 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
       menuIcon={FileText}
       navItems={NAV_ITEMS}
       profilePath="/profile-settings"
+      mobileNavStyle="bottom-bar"
     >
       {children}
     </AppShellLayout>
