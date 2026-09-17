@@ -190,11 +190,7 @@ export default function LoginPage() {
               Sign up
             </Link>
           </p>
-          <p className="text-center text-sm mt-2">
-            <Link to="/facility-reservation" className="text-neutral-500 underline hover:text-neutral-700">
-              Facility Booking Portal
-            </Link>
-          </p>
+
         </div>
       </div>
 
