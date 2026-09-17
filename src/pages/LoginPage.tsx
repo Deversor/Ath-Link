@@ -84,8 +84,7 @@ export default function LoginPage() {
         </h1>
 
         <p className="hidden md:block text-neutral-400 max-w-sm mb-10">
-          Access your personalized portal to manage training schedules,
-          equipment, wellness programs, and more.
+          Access your personalized portal to manage training schedules and more.
         </p>
 
         <div className="hidden md:inline-flex items-center gap-2 w-fit px-3 py-2 rounded-lg border border-neutral-700 text-sm text-neutral-300">
@@ -102,7 +101,7 @@ export default function LoginPage() {
       <div className="md:w-1/2 flex items-center justify-center px-6 py-10 md:py-16">
         <div className="w-full max-w-sm">
           <h2 className="text-2xl font-bold text-neutral-900 mb-1">Welcome back</h2>
-          <p className="text-neutral-500 mb-8">Sign in to your portal account.</p>
+          <p className="text-neutral-500 mb-8">Sign in to your AthLink account.</p>
 
           {wasDeactivated && (
             <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-6">
@@ -127,7 +126,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@psu.edu"
+                  placeholder="your@psu.palawan.edu.ph"
                   autoComplete="email"
                   className="pl-10"
                   {...register('email')}
