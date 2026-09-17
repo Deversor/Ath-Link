@@ -4,6 +4,7 @@ import SuperAdminPortalLayout from '../../components/layout/SuperAdminPortalLayo
 import { supabase } from '../../lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 
 interface SettingsRow {
   key: string;
@@ -35,9 +36,12 @@ export default function SuperAdminSystemSettingsPage() {
     load();
   };
 
+  const [showMaintenanceConfirm, setShowMaintenanceConfirm] = useState(false);
+
   const toggleMaintenance = async () => {
     const next = settings.maintenance_mode === 'true' ? 'false' : 'true';
     await saveSetting('maintenance_mode', next);
+    setShowMaintenanceConfirm(false);
     setMessage(
       next === 'true'
         ? 'Maintenance mode is now ON — everyone except Super Admin will be locked out of the portals.'
@@ -80,7 +84,7 @@ export default function SuperAdminSystemSettingsPage() {
             type="button"
             className={settings.maintenance_mode === 'true' ? 'bg-red-600 hover:bg-red-700' : ''}
             variant={settings.maintenance_mode === 'true' ? undefined : 'outline'}
-            onClick={toggleMaintenance}
+            onClick={() => (settings.maintenance_mode === 'true' ? toggleMaintenance() : setShowMaintenanceConfirm(true))}
           >
             {settings.maintenance_mode === 'true' ? 'Turn Off' : 'Configure'}
           </Button>
@@ -195,6 +199,17 @@ export default function SuperAdminSystemSettingsPage() {
       </section>
 
       {showKeysModal && <AdminKeysModal onClose={() => setShowKeysModal(false)} onSaved={setMessage} />}
+
+      {showMaintenanceConfirm && (
+        <ConfirmDialog
+          title="Turn on Maintenance Mode?"
+          description="Every Staff Admin, Registrar, Coach, Student, and Facility Requester will be immediately locked out of their portals until you turn this back off. Only Super Admin will still have access."
+          confirmLabel="Turn On"
+          variant="danger"
+          onConfirm={toggleMaintenance}
+          onClose={() => setShowMaintenanceConfirm(false)}
+        />
+      )}
     </SuperAdminPortalLayout>
   );
 }
@@ -253,18 +268,16 @@ function AdminKeysModal({
   const [newKey, setNewKey] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleSave = async () => {
-    if (!newKey.trim()) {
-      setError('Enter a new key.');
-      return;
-    }
     setIsSubmitting(true);
     const { data, error: rpcError } = await supabase.rpc('set_admin_key', {
       p_role: role,
       p_new_key: newKey,
     });
     setIsSubmitting(false);
+    setShowConfirm(false);
 
     if (rpcError || !data) {
       setError(rpcError?.message ?? "Couldn't update the key.");
@@ -301,7 +314,12 @@ function AdminKeysModal({
         {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
 
         <div className="flex gap-3 mt-4">
-          <Button type="button" className="flex-1 bg-orange-500 hover:bg-orange-600" onClick={handleSave} disabled={isSubmitting}>
+          <Button
+            type="button"
+            className="flex-1 bg-orange-500 hover:bg-orange-600"
+            onClick={() => (newKey.trim() ? setShowConfirm(true) : setError('Enter a new key.'))}
+            disabled={isSubmitting}
+          >
             {isSubmitting ? 'Saving…' : 'Update Key'}
           </Button>
           <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
@@ -309,6 +327,18 @@ function AdminKeysModal({
           </Button>
         </div>
       </div>
+
+      {showConfirm && (
+        <ConfirmDialog
+          title={`Rotate the ${role.replace('_', ' ')} login key?`}
+          description="Every admin of this role will need the new key to sign in — anyone still using the old one will be locked out until you share it with them."
+          confirmLabel="Update Key"
+          variant="danger"
+          isLoading={isSubmitting}
+          onConfirm={handleSave}
+          onClose={() => setShowConfirm(false)}
+        />
+      )}
     </div>
   );
 }

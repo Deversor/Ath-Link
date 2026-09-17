@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { useSports } from '../../hooks/useSports';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 
 interface Coach {
   id: string;
@@ -57,11 +58,14 @@ export function CoachManagementContent() {
     setMessage(error ? error.message : `Password reset email sent to ${email}.`);
   };
 
+  const [resetTarget, setResetTarget] = useState<Coach | null>(null);
+
   const handleResetProfile = async (coachId: string) => {
     await supabase
       .from('profiles')
       .update({ phone_number: null, specialization: null, years_experience: null })
       .eq('id', coachId);
+    setResetTarget(null);
     setMessage('Coach profile details cleared — they can fill them in again from their settings.');
     loadCoaches();
   };
@@ -129,7 +133,7 @@ export function CoachManagementContent() {
                       type="button"
                       variant="outline"
                       className="text-xs h-8"
-                      onClick={() => handleResetProfile(coach.id)}
+                      onClick={() => setResetTarget(coach)}
                     >
                       <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
                       Reset Profile
@@ -167,6 +171,17 @@ export function CoachManagementContent() {
           );
         })}
       </div>
+
+      {resetTarget && (
+        <ConfirmDialog
+          title="Clear this coach's profile details?"
+          description={`${resetTarget.full_name}'s phone number, specialization, and years of experience will be cleared. They can fill them back in from their settings.`}
+          confirmLabel="Clear Details"
+          variant="danger"
+          onConfirm={() => handleResetProfile(resetTarget.id)}
+          onClose={() => setResetTarget(null)}
+        />
+      )}
     </>
   );
 }

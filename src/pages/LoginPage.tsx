@@ -100,7 +100,7 @@ export default function LoginPage() {
       {/* Right panel — form */}
       <div className="md:w-1/2 flex items-center justify-center px-6 py-10 md:py-16">
         <div className="w-full max-w-sm">
-          <h2 className="text-2xl font-bold text-neutral-900 mb-1">Welcome back</h2>
+          <h2 className="text-2xl font-bold text-neutral-900 mb-1">Welcome Back</h2>
           <p className="text-neutral-500 mb-8">Sign in to your AthLink account.</p>
 
           {wasDeactivated && (

@@ -4,6 +4,8 @@ import { Building2, Trophy, Search, ChevronLeft, ChevronRight, LogIn, LogOut } f
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuthStore';
 import NotificationsBell from '../components/layout/NotificationsBell';
+import ReadyToBookModal from '../components/common/ReadyToBookModal';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 import { getMonthGrid, toDateKey, WEEKDAY_LABELS, MONTH_LABELS } from '../lib/calendarUtils';
 
 interface Facility {
@@ -81,8 +83,11 @@ export default function PublicFacilityBookingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, user]);
 
+  const [cancelTarget, setCancelTarget] = useState<MyReservation | null>(null);
+
   const handleCancel = async (id: string) => {
     await supabase.from('facility_reservations').update({ status: 'cancelled' }).eq('id', id);
+    setCancelTarget(null);
     setMyRequestsMessage('Reservation cancelled.');
     loadMyRequests();
   };
@@ -159,28 +164,32 @@ export default function PublicFacilityBookingPage() {
     [facilities, search]
   );
 
+  const [readyToBookTarget, setReadyToBookTarget] = useState<{ facilityName: string; date: string } | null>(null);
+
   const handleReserveClick = (date: Date, status: Availability) => {
     if (status === 'full' || status === 'past') return;
 
+    const dateKey = toDateKey(date);
+
     if (!user) {
-      // Guests must sign in (or register) before they can reserve —
-      // remember what they were trying to book so the flow can resume.
+      // Guests must sign in (or register) before they can reserve — show a
+      // clear choice instead of yanking them straight to login. Remember
+      // what they were trying to book so the flow can resume afterward.
       sessionStorage.setItem(
         'pendingReservationIntent',
-        JSON.stringify({ facilityId: activeFacility?.id, date: toDateKey(date) })
+        JSON.stringify({ facilityId: activeFacility?.id, date: dateKey })
       );
-      navigate('/login', { state: { redirectTo: '/facility-reservation' } });
+      setReadyToBookTarget({ facilityName: activeFacility?.name ?? 'this facility', date: dateKey });
       return;
     }
 
-    // Logged-in reservation form arrives in Phase 3.
-    navigate('/facility-reservation/reserve', { state: { facilityId: activeFacility?.id, date: toDateKey(date) } });
+    navigate('/facility-reservation/reserve', { state: { facilityId: activeFacility?.id, date: dateKey } });
   };
 
   return (
     <div className="min-h-screen bg-neutral-50">
       <header className="bg-neutral-950 text-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center">
               <Trophy className="w-4 h-4 text-white" />
@@ -222,7 +231,7 @@ export default function PublicFacilityBookingPage() {
       </header>
 
       <div className="bg-gradient-to-r from-orange-500 to-orange-400 text-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
           <h1 className="flex items-center gap-2 text-xl md:text-2xl font-bold">
             <Building2 className="w-6 h-6" />
             PalSU Facility Booking Portal
@@ -235,7 +244,7 @@ export default function PublicFacilityBookingPage() {
         </div>
       </div>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 space-y-4">
         {user && (
           <div className="flex gap-2">
             <button
@@ -319,7 +328,7 @@ export default function PublicFacilityBookingPage() {
                       {canCancel && (
                         <button
                           type="button"
-                          onClick={() => handleCancel(r.id)}
+                          onClick={() => setCancelTarget(r)}
                           className="text-xs font-medium text-red-600 hover:text-red-700"
                         >
                           Cancel Request
@@ -476,6 +485,28 @@ export default function PublicFacilityBookingPage() {
           © {new Date().getFullYear()} Palawan State University · Sports Office
         </p>
       </footer>
+
+      {readyToBookTarget && (
+        <ReadyToBookModal
+          facilityName={readyToBookTarget.facilityName}
+          date={readyToBookTarget.date}
+          onSignIn={() => navigate('/login', { state: { redirectTo: '/facility-reservation' } })}
+          onCreateAccount={() => navigate('/signup')}
+          onClose={() => setReadyToBookTarget(null)}
+        />
+      )}
+
+      {cancelTarget && (
+        <ConfirmDialog
+          title="Cancel this reservation?"
+          description={`This will cancel your request for ${facilityName(cancelTarget.facility_id)} on ${cancelTarget.reservation_date}. This can't be undone — you'd need to submit a new request to rebook.`}
+          confirmLabel="Cancel Reservation"
+          cancelLabel="Keep It"
+          variant="danger"
+          onConfirm={() => handleCancel(cancelTarget.id)}
+          onClose={() => setCancelTarget(null)}
+        />
+      )}
     </div>
   );
 }

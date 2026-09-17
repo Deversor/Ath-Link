@@ -3,6 +3,7 @@ import { ShieldCheck, Plus, Upload, Trash2 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
 import { Button } from '@/components/ui/button';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 import { Input } from '@/components/ui/input';
 
 interface WhitelistEntry {
@@ -75,8 +76,11 @@ export function WhitelistContent() {
     loadEntries();
   };
 
+  const [removeTarget, setRemoveTarget] = useState<WhitelistEntry | null>(null);
+
   const handleRemove = async (id: string) => {
     await supabase.from('athlete_whitelist').delete().eq('id', id);
+    setRemoveTarget(null);
     loadEntries();
   };
 
@@ -166,7 +170,7 @@ export function WhitelistContent() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => handleRemove(entry.id)}
+                    onClick={() => setRemoveTarget(entry)}
                     aria-label="Remove"
                     className="text-neutral-400 hover:text-red-600"
                   >
@@ -178,6 +182,17 @@ export function WhitelistContent() {
           </div>
         )}
       </div>
+
+      {removeTarget && (
+        <ConfirmDialog
+          title="Remove this email?"
+          description={`${removeTarget.email} will no longer be able to sign up as a student athlete unless re-added.`}
+          confirmLabel="Remove"
+          variant="danger"
+          onConfirm={() => handleRemove(removeTarget.id)}
+          onClose={() => setRemoveTarget(null)}
+        />
+      )}
     </>
   );
 }

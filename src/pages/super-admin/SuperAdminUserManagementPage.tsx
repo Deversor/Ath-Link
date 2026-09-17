@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { useSports } from '../../hooks/useSports';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 
 interface UserRow {
   id: string;
@@ -74,18 +75,24 @@ export default function SuperAdminUserManagementPage() {
     );
   });
 
+  const [deactivateTarget, setDeactivateTarget] = useState<UserRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
+
   const handleToggleActive = async (u: UserRow) => {
     await supabase.from('profiles').update({ is_active: !u.is_active }).eq('id', u.id);
+    setDeactivateTarget(null);
     setMessage(`${u.full_name} has been ${u.is_active ? 'deactivated' : 'reactivated'}.`);
     load();
   };
 
   const handleDelete = async (u: UserRow) => {
     if (u.id === currentUser?.id) {
+      setDeleteTarget(null);
       setMessage("You can't remove your own account.");
       return;
     }
     await supabase.from('profiles').delete().eq('id', u.id);
+    setDeleteTarget(null);
     setMessage(
       `${u.full_name}'s profile was removed — they can no longer access any portal. (Their login credentials still technically exist in the auth system; fully deleting those requires server-side access we don't expose here.)`
     );
@@ -180,7 +187,7 @@ export default function SuperAdminUserManagementPage() {
                   </div>
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <Button type="button" variant="outline" className="h-8 text-xs" onClick={() => handleToggleActive(u)}>
+                  <Button type="button" variant="outline" className="h-8 text-xs" onClick={() => (u.is_active ? setDeactivateTarget(u) : handleToggleActive(u))}>
                     <Power className="w-3.5 h-3.5 mr-1" />
                     {u.is_active ? 'Deactivate' : 'Activate'}
                   </Button>
@@ -191,7 +198,7 @@ export default function SuperAdminUserManagementPage() {
                     type="button"
                     variant="outline"
                     className="h-8 w-8 p-0 border-red-200 text-red-600 hover:bg-red-50"
-                    onClick={() => handleDelete(u)}
+                    onClick={() => setDeleteTarget(u)}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>
@@ -208,6 +215,28 @@ export default function SuperAdminUserManagementPage() {
 
       {showAddModal && (
         <AddUserModal sports={sports} onClose={() => setShowAddModal(false)} onDone={(msg) => { setShowAddModal(false); setMessage(msg); }} />
+      )}
+
+      {deactivateTarget && (
+        <ConfirmDialog
+          title="Deactivate this account?"
+          description={`${deactivateTarget.full_name} will immediately lose access to every portal until reactivated.`}
+          confirmLabel="Deactivate"
+          variant="danger"
+          onConfirm={() => handleToggleActive(deactivateTarget)}
+          onClose={() => setDeactivateTarget(null)}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Remove this user?"
+          description={`${deleteTarget.full_name}'s profile will be permanently deleted and they will lose all portal access. This can't be undone.`}
+          confirmLabel="Remove"
+          variant="danger"
+          onConfirm={() => handleDelete(deleteTarget)}
+          onClose={() => setDeleteTarget(null)}
+        />
       )}
     </SuperAdminPortalLayout>
   );

@@ -4,6 +4,7 @@ import SuperAdminPortalLayout from '../../components/layout/SuperAdminPortalLayo
 import { supabase } from '../../lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 
 interface Sport {
   id: string;
@@ -34,8 +35,11 @@ export default function SuperAdminSportProgramsPage() {
   const teamCount = sports.filter((s) => s.sport_type === 'team').length;
   const individualCount = sports.filter((s) => s.sport_type === 'individual').length;
 
+  const [deleteTarget, setDeleteTarget] = useState<Sport | null>(null);
+
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('sports').delete().eq('id', id);
+    setDeleteTarget(null);
     if (error) {
       setMessage(
         "Couldn't delete — this sport likely still has athletes, coaches, or schedules attached. Try marking it inactive instead."
@@ -148,7 +152,7 @@ export default function SuperAdminSportProgramsPage() {
                   type="button"
                   variant="outline"
                   className="h-8 text-xs border-red-200 text-red-600 hover:bg-red-50"
-                  onClick={() => handleDelete(sport.id)}
+                  onClick={() => setDeleteTarget(sport)}
                 >
                   <Trash2 className="w-3.5 h-3.5 mr-1" />
                   Delete
@@ -167,6 +171,17 @@ export default function SuperAdminSportProgramsPage() {
             setShowModal(false);
             load();
           }}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Delete this sport?"
+          description={`"${deleteTarget.name}" will be permanently removed. This can't be undone.`}
+          confirmLabel="Delete"
+          variant="danger"
+          onConfirm={() => handleDelete(deleteTarget.id)}
+          onClose={() => setDeleteTarget(null)}
         />
       )}
     </SuperAdminPortalLayout>
