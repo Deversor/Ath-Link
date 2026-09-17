@@ -50,6 +50,7 @@ interface AuthState {
   fetchProfile: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ success: boolean }>;
   signIn: (email: string, password: string) => Promise<{ success: boolean }>;
+  signInWithGoogle: (redirectTo: string) => Promise<void>;
   signUp: (params: {
     email: string;
     password: string;
@@ -204,6 +205,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     await get().fetchProfile();
 
     return { success: true };
+  },
+
+  signInWithGoogle: async (redirectTo) => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo },
+    });
+    // The browser navigates away to Google here — nothing more to do.
   },
 
   signUp: async ({ email, password, fullName, role, sport, emailRedirectTo }) => {

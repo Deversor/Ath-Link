@@ -12,6 +12,8 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import CheckEmailPage from './pages/CheckEmailPage';
 import CompleteAdminSignUpPage from './pages/CompleteAdminSignUpPage';
 import CompleteFacilityRequesterSignUpPage from './pages/CompleteFacilityRequesterSignUpPage';
+import AuthCallbackPage from './pages/AuthCallbackPage';
+import CompleteGoogleSignupPage from './pages/CompleteGoogleSignupPage';
 
 // Student portal
 import DashboardPage from './pages/portal/DashboardPage';
@@ -77,6 +79,8 @@ function App() {
         <Route path="/check-email" element={<CheckEmailPage />} />
         <Route path="/complete-admin-signup" element={<CompleteAdminSignUpPage />} />
         <Route path="/complete-facility-requester-signup" element={<CompleteFacilityRequesterSignUpPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        <Route path="/complete-google-signup" element={<CompleteGoogleSignupPage />} />
 
         {/* ── Student portal ── */}
         <Route

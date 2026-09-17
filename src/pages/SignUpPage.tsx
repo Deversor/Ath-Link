@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import SiteHeader from '../components/layout/SiteHeader';
 import SiteFooter from '../components/layout/SiteFooter';
+import GoogleSignInButton from '../components/auth/GoogleSignInButton';
 
 export default function SignUpPage() {
   const navigate = useNavigate();
@@ -123,8 +124,8 @@ export default function SignUpPage() {
     <div className="min-h-screen flex flex-col bg-white">
       <SiteHeader />
 
-      <main className="flex-1 flex items-start justify-center px-4 py-16">
-        <div className="w-full max-w-md bg-white border border-neutral-200 rounded-xl shadow-sm p-8">
+      <main className="flex-1 flex items-start justify-center px-4 py-8 sm:py-16">
+        <div className="w-full max-w-md bg-white border border-neutral-200 rounded-xl shadow-sm p-6 sm:p-8">
           <div className="flex flex-col items-center text-center mb-6">
             <div className="w-14 h-14 rounded-full bg-orange-500 flex items-center justify-center mb-4">
               <Trophy className="w-6 h-6 text-white" />
@@ -227,6 +228,14 @@ export default function SignUpPage() {
               {isLoading ? 'Creating account…' : 'Create Account'}
             </Button>
           </form>
+
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-px bg-neutral-200" />
+            <span className="text-xs text-neutral-400">or</span>
+            <div className="flex-1 h-px bg-neutral-200" />
+          </div>
+
+          <GoogleSignInButton />
 
           <p className="text-center text-sm text-neutral-500 mt-6">
             Already have an account?{' '}

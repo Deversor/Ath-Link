@@ -70,9 +70,9 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-white">
-      <div className="relative md:w-1/2 flex flex-col justify-center px-6 sm:px-10 py-10 md:py-16 lg:py-0 bg-gradient-to-br from-neutral-950 via-neutral-900 to-orange-950 text-white overflow-hidden">
+      <div className="relative md:w-1/2 flex flex-col justify-center px-6 sm:px-10 py-6 md:py-16 lg:py-0 bg-gradient-to-br from-neutral-950 via-neutral-900 to-orange-950 text-white overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-1 bg-orange-500" />
-        <div className="flex items-center gap-2 mb-8 md:mb-16">
+        <div className="flex items-center gap-2 mb-0 md:mb-16">
           <div className="w-9 h-9 rounded-lg bg-orange-500 flex items-center justify-center">
             <Trophy className="w-5 h-5 text-white" />
           </div>
@@ -80,10 +80,10 @@ export default function ResetPasswordPage() {
             PalawanSU <span className="text-orange-500">AthLink</span>
           </span>
         </div>
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-6 max-w-md">
+        <h1 className="hidden md:block text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-6 max-w-md">
           Your Gateway to <span className="text-orange-500">Athletic Excellence</span>
         </h1>
-        <div className="inline-flex items-center gap-2 w-fit px-3 py-2 rounded-lg border border-neutral-700 text-sm text-neutral-300">
+        <div className="hidden md:inline-flex items-center gap-2 w-fit px-3 py-2 rounded-lg border border-neutral-700 text-sm text-neutral-300">
           <ShieldCheck className="w-4 h-4 text-orange-500" />
           Protected · 5-attempt lockout · 15-min cooldown
         </div>

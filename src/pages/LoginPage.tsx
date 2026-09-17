@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Mail, Lock, Trophy, ShieldCheck, HelpCircle, X } from 'lucide-react';
 import { loginSchema, type LoginFormValues } from '../lib/schemas/loginSchema';
 import { useAuthStore } from '../store/useAuthStore';
@@ -11,9 +11,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import GoogleSignInButton from '../components/auth/GoogleSignInButton';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const oauthError = (location.state as { error?: string } | null)?.error;
   const [searchParams] = useSearchParams();
   const wasDeactivated = searchParams.get('deactivated') === '1';
   const { signIn, isLoading, error, lockedUntil } = useAuthStore();
@@ -64,10 +67,10 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-white">
       {/* Left panel — branding */}
-      <div className="relative md:w-1/2 flex flex-col justify-center px-6 sm:px-10 py-10 md:py-16 lg:py-0 bg-gradient-to-br from-neutral-950 via-neutral-900 to-orange-950 text-white overflow-hidden">
+      <div className="relative md:w-1/2 flex flex-col justify-center px-6 sm:px-10 py-6 md:py-16 lg:py-0 bg-gradient-to-br from-neutral-950 via-neutral-900 to-orange-950 text-white overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-1 bg-orange-500" />
 
-        <div className="flex items-center gap-2 mb-8 md:mb-16">
+        <div className="flex items-center gap-2 mb-0 md:mb-16">
           <div className="w-9 h-9 rounded-lg bg-orange-500 flex items-center justify-center">
             <Trophy className="w-5 h-5 text-white" />
           </div>
@@ -76,21 +79,21 @@ export default function LoginPage() {
           </span>
         </div>
 
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-6 max-w-md">
+        <h1 className="hidden md:block text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-6 max-w-md">
           Your Gateway to <span className="text-orange-500">Athletic Excellence</span>
         </h1>
 
-        <p className="text-neutral-400 max-w-sm mb-10">
+        <p className="hidden md:block text-neutral-400 max-w-sm mb-10">
           Access your personalized portal to manage training schedules,
           equipment, wellness programs, and more.
         </p>
 
-        <div className="inline-flex items-center gap-2 w-fit px-3 py-2 rounded-lg border border-neutral-700 text-sm text-neutral-300">
+        <div className="hidden md:inline-flex items-center gap-2 w-fit px-3 py-2 rounded-lg border border-neutral-700 text-sm text-neutral-300">
           <ShieldCheck className="w-4 h-4 text-orange-500" />
           Protected · 5-attempt lockout · 15-min cooldown
         </div>
 
-        <p className="absolute bottom-6 left-10 text-xs text-neutral-500">
+        <p className="hidden md:block absolute bottom-6 left-10 text-xs text-neutral-500">
           © 2026 Palawan State University Sports Division
         </p>
       </div>
@@ -104,6 +107,12 @@ export default function LoginPage() {
           {wasDeactivated && (
             <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-6">
               Your account has been deactivated. Contact your Sports Office administrator.
+            </p>
+          )}
+
+          {oauthError && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-6">
+              {oauthError}
             </p>
           )}
 
@@ -167,6 +176,14 @@ export default function LoginPage() {
               {isLoading ? 'Signing in…' : isLocked ? 'Locked — try later' : 'Sign In'}
             </Button>
           </form>
+
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-px bg-neutral-200" />
+            <span className="text-xs text-neutral-400">or</span>
+            <div className="flex-1 h-px bg-neutral-200" />
+          </div>
+
+          <GoogleSignInButton />
 
           <p className="text-center text-sm text-neutral-500 mt-6">
             Don&apos;t have an account?{' '}
