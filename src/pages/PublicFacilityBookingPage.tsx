@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Building2, Trophy, Search, ChevronLeft, ChevronRight, LogIn, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuthStore';
@@ -482,7 +482,14 @@ export default function PublicFacilityBookingPage() {
 
       <footer className="border-t border-neutral-200 mt-6">
         <p className="text-center text-xs text-neutral-400 py-4">
-          © {new Date().getFullYear()} Palawan State University · Sports Office
+          © {new Date().getFullYear()} Palawan State University · Sports Office ·{' '}
+          <Link to="/privacy-policy" className="underline hover:text-neutral-600">
+            Privacy Policy
+          </Link>{' '}
+          ·{' '}
+          <Link to="/terms" className="underline hover:text-neutral-600">
+            Terms of Service
+          </Link>
         </p>
       </footer>
 

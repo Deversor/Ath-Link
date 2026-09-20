@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, Link } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
@@ -9,6 +9,7 @@ import { supabase } from '../lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import SiteHeader from '../components/layout/SiteHeader';
 import SiteFooter from '../components/layout/SiteFooter';
 import GoogleSignInButton from '../components/auth/GoogleSignInButton';
@@ -20,6 +21,7 @@ export default function SignUpPage() {
   const {
     register,
     handleSubmit,
+    control,
     watch,
     setError,
     formState: { errors },
@@ -219,6 +221,37 @@ export default function SignUpPage() {
                 {error}
               </p>
             )}
+
+            <div>
+              <div className="flex items-start gap-2">
+                <Controller
+                  name="agreeToTerms"
+                  control={control}
+                  defaultValue={false as any}
+                  render={({ field }) => (
+                    <Checkbox
+                      id="agreeToTerms"
+                      checked={field.value}
+                      onCheckedChange={(checked: boolean | 'indeterminate') => field.onChange(checked === true)}
+                    />
+                  )}
+                />
+                <Label htmlFor="agreeToTerms" className="text-xs font-normal leading-snug text-neutral-600">
+                  I agree to the{' '}
+                  <Link to="/terms" target="_blank" className="text-orange-600 underline hover:text-orange-700">
+                    Terms of Service
+                  </Link>{' '}
+                  and{' '}
+                  <Link to="/privacy-policy" target="_blank" className="text-orange-600 underline hover:text-orange-700">
+                    Privacy Policy
+                  </Link>
+                  .
+                </Label>
+              </div>
+              {errors.agreeToTerms && (
+                <p className="mt-1 text-xs text-red-600">{errors.agreeToTerms.message}</p>
+              )}
+            </div>
 
             <Button
               type="submit"

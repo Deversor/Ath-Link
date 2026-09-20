@@ -41,6 +41,9 @@ export const signupSchema = z
       error: 'Please select a role',
     }),
     sport: z.string().optional(),
+    agreeToTerms: z.literal(true, {
+      error: 'You must agree to the Terms of Service and Privacy Policy',
+    }),
   })
   .superRefine((data, ctx) => {
     // Sport is required for Student Athletes (their sport) and Coaches (the sport they manage)

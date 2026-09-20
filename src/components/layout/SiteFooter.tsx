@@ -23,6 +23,16 @@ export default function SiteFooter() {
                 Sign Up
               </Link>
             </li>
+            <li>
+              <Link to="/privacy-policy" className="hover:text-orange-500">
+                Privacy Policy
+              </Link>
+            </li>
+            <li>
+              <Link to="/terms" className="hover:text-orange-500">
+                Terms of Service
+              </Link>
+            </li>
           </ul>
         </div>
         <div>

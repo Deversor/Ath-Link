@@ -14,6 +14,8 @@ import CompleteAdminSignUpPage from './pages/CompleteAdminSignUpPage';
 import CompleteFacilityRequesterSignUpPage from './pages/CompleteFacilityRequesterSignUpPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import CompleteGoogleSignupPage from './pages/CompleteGoogleSignupPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsOfServicePage from './pages/TermsOfServicePage';
 
 // Student portal
 import DashboardPage from './pages/portal/DashboardPage';
@@ -81,6 +83,8 @@ function App() {
         <Route path="/complete-facility-requester-signup" element={<CompleteFacilityRequesterSignUpPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/complete-google-signup" element={<CompleteGoogleSignupPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms" element={<TermsOfServicePage />} />
 
         {/* ── Student portal ── */}
         <Route

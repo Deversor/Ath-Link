@@ -427,7 +427,15 @@ export default function FacilityReservationFormPage() {
                 )}
               />
               <Label htmlFor="agree" className="text-xs font-normal leading-snug">
-                I agree to the facility use policies and consent to the processing of my data.
+                I agree to the{' '}
+                <Link to="/terms" target="_blank" className="underline hover:text-blue-900">
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link to="/privacy-policy" target="_blank" className="underline hover:text-blue-900">
+                  Privacy Policy
+                </Link>
+                , and consent to the processing of my data.
               </Label>
             </div>
             {errors.agree && <p className="mt-2 text-xs text-red-600">{errors.agree.message}</p>}

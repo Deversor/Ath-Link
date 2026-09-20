@@ -64,7 +64,6 @@ interface AuthState {
   clearError: () => void;
 }
 
-const MAX_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
 
 function adminVerifiedStorageKey(userId: string) {
@@ -163,15 +162,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signIn: async (email, password) => {
-    const { lockedUntil } = get();
+    set({ isLoading: true, error: null });
 
-    if (lockedUntil && Date.now() < lockedUntil) {
-      const minutesLeft = Math.ceil((lockedUntil - Date.now()) / 60000);
-      set({ error: `Too many attempts. Try again in ${minutesLeft} min.` });
+    // Check the real, server-side lockout — not just local state, which a
+    // page refresh would silently reset.
+    const { data: lockCheck } = await supabase.rpc('check_login_lockout', { p_email: email });
+    if (lockCheck?.locked) {
+      const lockedUntilMs = new Date(lockCheck.locked_until).getTime();
+      const minutesLeft = Math.ceil((lockedUntilMs - Date.now()) / 60000);
+      set({ isLoading: false, lockedUntil: lockedUntilMs, error: `Too many attempts. Try again in ${Math.max(minutesLeft, 1)} min.` });
       return { success: false };
     }
-
-    set({ isLoading: true, error: null });
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -179,17 +180,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     });
 
     if (error) {
-      const attempts = get().failedAttempts + 1;
-      const shouldLock = attempts >= MAX_ATTEMPTS;
-
+      const { data: recorded } = await supabase.rpc('record_failed_login', { p_email: email });
       set({
         isLoading: false,
-        error: error.message,
-        failedAttempts: attempts,
-        lockedUntil: shouldLock ? Date.now() + LOCKOUT_MINUTES * 60_000 : null,
+        failedAttempts: recorded?.attempts ?? get().failedAttempts + 1,
+        lockedUntil: recorded?.locked ? new Date(recorded.locked_until).getTime() : null,
+        error: recorded?.locked
+          ? `Too many attempts. Try again in ${LOCKOUT_MINUTES} min.`
+          : error.message,
       });
       return { success: false };
     }
+
+    await supabase.rpc('clear_login_attempts', { p_email: email });
 
     set({
       user: data.user,
@@ -243,13 +246,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   verifyAdminKey: async (key) => {
-    const { user, profile, adminKeyLockedUntil } = get();
-
-    if (adminKeyLockedUntil && Date.now() < adminKeyLockedUntil) {
-      const minutesLeft = Math.ceil((adminKeyLockedUntil - Date.now()) / 60000);
-      set({ adminKeyError: `Too many attempts. Try again in ${minutesLeft} min.` });
-      return { success: false };
-    }
+    const { user, profile } = get();
 
     if (!user || !profile) {
       set({ adminKeyError: 'Your session expired. Please sign in again.' });
@@ -263,15 +260,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       p_key: key,
     });
 
-    if (error || !data) {
-      const attempts = get().adminKeyAttempts + 1;
-      const shouldLock = attempts >= MAX_ATTEMPTS;
-
+    if (error || !data?.success) {
       set({
         isLoading: false,
-        adminKeyAttempts: attempts,
-        adminKeyLockedUntil: shouldLock ? Date.now() + LOCKOUT_MINUTES * 60_000 : null,
-        adminKeyError: shouldLock
+        adminKeyAttempts: data?.attempts ?? get().adminKeyAttempts + 1,
+        adminKeyLockedUntil: data?.locked ? new Date(data.locked_until).getTime() : null,
+        adminKeyError: data?.locked
           ? `Too many attempts. Try again in ${LOCKOUT_MINUTES} min.`
           : 'Incorrect login key.',
       });

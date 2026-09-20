@@ -13,6 +13,9 @@ export const adminSignupSchema = z.object({
   role: z.enum(['staff_admin', 'registrar', 'superadmin'], {
     error: 'Please select a role',
   }),
+  agreeToTerms: z.literal(true, {
+    error: 'You must agree to the Terms of Service and Privacy Policy',
+  }),
 });
 
 export type AdminSignupValues = z.infer<typeof adminSignupSchema>;

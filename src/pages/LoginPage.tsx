@@ -84,7 +84,8 @@ export default function LoginPage() {
         </h1>
 
         <p className="hidden md:block text-neutral-400 max-w-sm mb-10">
-          Access your personalized portal to manage training schedules and more.
+          Access your personalized portal to manage training schedules,
+          equipment, wellness programs, and more.
         </p>
 
         <div className="hidden md:inline-flex items-center gap-2 w-fit px-3 py-2 rounded-lg border border-neutral-700 text-sm text-neutral-300">
@@ -100,8 +101,8 @@ export default function LoginPage() {
       {/* Right panel — form */}
       <div className="md:w-1/2 flex items-center justify-center px-6 py-10 md:py-16">
         <div className="w-full max-w-sm">
-          <h2 className="text-2xl font-bold text-neutral-900 mb-1">Welcome Back</h2>
-          <p className="text-neutral-500 mb-8">Sign in to your AthLink account.</p>
+          <h2 className="text-2xl font-bold text-neutral-900 mb-1">Welcome back</h2>
+          <p className="text-neutral-500 mb-8">Sign in to your portal account.</p>
 
           {wasDeactivated && (
             <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-6">
@@ -126,7 +127,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="your@psu.palawan.edu.ph"
+                  placeholder="you@psu.edu"
                   autoComplete="email"
                   className="pl-10"
                   {...register('email')}
@@ -190,7 +191,11 @@ export default function LoginPage() {
               Sign up
             </Link>
           </p>
-
+          <p className="text-center text-sm mt-2">
+            <Link to="/facility-reservation" className="text-neutral-500 underline hover:text-neutral-700">
+              Facility Booking Portal
+            </Link>
+          </p>
         </div>
       </div>
 
@@ -226,9 +231,14 @@ export default function LoginPage() {
               services. We process your data in compliance with the Data
               Privacy Act of 2012 (RA 10173). Your data is kept secure and
               will not be shared without your consent.{' '}
-              <a href="/privacy-policy" className="text-orange-600 underline hover:text-orange-700">
-                Read our full Privacy Policy.
-              </a>
+              <Link to="/privacy-policy" target="_blank" className="text-orange-600 underline hover:text-orange-700">
+                Read our full Privacy Policy
+              </Link>{' '}
+              or{' '}
+              <Link to="/terms" target="_blank" className="text-orange-600 underline hover:text-orange-700">
+                Terms of Service
+              </Link>
+              .
             </p>
 
             <div className="flex items-start gap-2 mb-5">
