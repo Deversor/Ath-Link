@@ -3,7 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Trophy, KeyRound, ShieldCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import PasswordInput from '../components/common/PasswordInput';
+import PasswordStrengthMeter from '../components/common/PasswordStrengthMeter';
 import { Label } from '@/components/ui/label';
 
 export default function ResetPasswordPage() {
@@ -125,22 +126,21 @@ export default function ResetPasswordPage() {
                   <Label htmlFor="password" className="mb-1.5 block">
                     New Password
                   </Label>
-                  <Input
+                  <PasswordInput
                     id="password"
-                    type="password"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoFocus
                   />
+                  <PasswordStrengthMeter password={password} />
                 </div>
                 <div>
                   <Label htmlFor="confirmPassword" className="mb-1.5 block">
                     Confirm New Password
                   </Label>
-                  <Input
+                  <PasswordInput
                     id="confirmPassword"
-                    type="password"
                     placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}

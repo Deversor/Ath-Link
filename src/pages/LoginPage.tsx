@@ -9,6 +9,7 @@ import { ROLE_HOME, isPrivilegedRole } from '../lib/roleHome';
 import { supabase } from '../lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import PasswordInput from '../components/common/PasswordInput';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import GoogleSignInButton from '../components/auth/GoogleSignInButton';
@@ -55,11 +56,19 @@ export default function LoginPage() {
       });
 
       const profile = useAuthStore.getState().profile;
+      const intendedFrom = (location.state as { from?: string } | null)?.from;
+
       if (profile && isPrivilegedRole(profile.role)) {
-        navigate('/admin-verify');
+        navigate('/admin-verify', intendedFrom ? { state: { from: intendedFrom } } : undefined);
       } else if (profile) {
-        const pending = sessionStorage.getItem('pendingReservationIntent');
-        navigate(pending ? '/facility-reservation/reserve' : ROLE_HOME[profile.role]);
+        const pendingReservation = sessionStorage.getItem('pendingReservationIntent');
+        if (pendingReservation) {
+          navigate('/facility-reservation/reserve');
+        } else if (intendedFrom) {
+          navigate(intendedFrom);
+        } else {
+          navigate(ROLE_HOME[profile.role]);
+        }
       }
     }
   };
@@ -147,10 +156,9 @@ export default function LoginPage() {
                 </Link>
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-                <Input
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 z-10" />
+                <PasswordInput
                   id="password"
-                  type="password"
                   placeholder="••••••••"
                   autoComplete="current-password"
                   className="pl-10"

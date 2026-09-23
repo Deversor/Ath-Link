@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import { ROLE_HOME, isPrivilegedRole, type AppRole } from '../../lib/roleHome';
 
@@ -13,6 +13,7 @@ export default function RequireAuth({
 }) {
   const { user, profile, isInitialized, isProfileLoading, isAdminVerified, maintenanceMode, init } =
     useAuthStore();
+  const location = useLocation();
 
   useEffect(() => {
     if (!isInitialized) {
@@ -29,7 +30,7 @@ export default function RequireAuth({
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location.pathname + location.search }} replace />;
   }
 
   // Wait for the profile to arrive before checking role, so we don't
@@ -71,7 +72,7 @@ export default function RequireAuth({
   // Privileged roles must clear the admin login-key step before reaching
   // any of their pages, even if they're logged in with the right role.
   if (profile && isPrivilegedRole(profile.role) && !isAdminVerified) {
-    return <Navigate to="/admin-verify" replace />;
+    return <Navigate to="/admin-verify" state={{ from: location.pathname + location.search }} replace />;
   }
 
   return <>{children}</>;

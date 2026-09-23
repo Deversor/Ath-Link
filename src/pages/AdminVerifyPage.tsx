@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { ShieldCheck, Trophy } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { ROLE_HOME } from '../lib/roleHome';
@@ -11,6 +11,7 @@ const MAX_ATTEMPTS = 5;
 
 export default function AdminVerifyPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { profile, user, verifyAdminKey, isLoading, adminKeyError, adminKeyAttempts, adminKeyLockedUntil } =
     useAuthStore();
 
@@ -28,7 +29,8 @@ export default function AdminVerifyPage() {
     e.preventDefault();
     const { success } = await verifyAdminKey(key);
     if (success && profile) {
-      navigate(ROLE_HOME[profile.role], { replace: true });
+      const intendedFrom = (location.state as { from?: string } | null)?.from;
+      navigate(intendedFrom ?? ROLE_HOME[profile.role], { replace: true });
     }
   };
 

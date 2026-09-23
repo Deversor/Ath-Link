@@ -7,6 +7,8 @@ import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuthStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import PasswordInput from '../components/common/PasswordInput';
+import PasswordStrengthMeter from '../components/common/PasswordStrengthMeter';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -18,6 +20,7 @@ export default function AdminSignUpPage() {
     register,
     handleSubmit,
     control,
+    watch,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<AdminSignupValues>({ resolver: zodResolver(adminSignupSchema) });
@@ -103,7 +106,8 @@ export default function AdminSignUpPage() {
             <Label htmlFor="password" className="mb-1.5 block">
               Password
             </Label>
-            <Input id="password" type="password" placeholder="••••••••" {...register('password')} />
+            <PasswordInput id="password" placeholder="••••••••" {...register('password')} />
+            <PasswordStrengthMeter password={watch('password') ?? ''} />
             {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
           </div>
 
