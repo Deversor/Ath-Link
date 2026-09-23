@@ -14,6 +14,14 @@ const REQUIRED_DOCS = [
   'ID Photo (2x2)',
 ];
 
+const DOC_TYPES = [
+  { type: 'medical_clearance', label: 'Medical Clearance Certificate' },
+  { type: 'academic_record', label: 'Academic Record / Grade Sheet' },
+  { type: 'parental_consent', label: 'Parental Consent Form' },
+  { type: 'eligibility_form', label: 'Sports Eligibility Form' },
+  { type: 'id_photo', label: 'ID Photo (2x2)' },
+];
+
 interface Athlete {
   id: string;
   full_name: string;
@@ -22,6 +30,7 @@ interface Athlete {
   document_compile_status: string;
   revision_note: string | null;
   uploadedCount: number;
+  uploadedDocTypes: string[];
 }
 
 export default function CoachAthletesPage() {
@@ -32,6 +41,7 @@ export default function CoachAthletesPage() {
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [deadline, setDeadline] = useState('2026-05-15');
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [expandedAthlete, setExpandedAthlete] = useState<string | null>(null);
 
   const loadAthletes = async () => {
     if (!sport) return;
@@ -50,22 +60,34 @@ export default function CoachAthletesPage() {
     const ids = roster.map((r) => r.id);
     const { data: docs } = await supabase
       .from('document_submissions')
-      .select('user_id, status')
+      .select('user_id, doc_type, status')
       .in('user_id', ids.length > 0 ? ids : ['00000000-0000-0000-0000-000000000000'])
       .neq('status', 'missing');
 
-    const counts: Record<string, number> = {};
+    const typesByAthlete: Record<string, string[]> = {};
     (docs ?? []).forEach((d) => {
-      counts[d.user_id] = (counts[d.user_id] ?? 0) + 1;
+      typesByAthlete[d.user_id] = [...(typesByAthlete[d.user_id] ?? []), d.doc_type];
     });
 
     setAthletes(
       roster.map((r) => ({
         ...r,
         document_compile_status: r.document_compile_status ?? 'not_ready',
-        uploadedCount: counts[r.id] ?? 0,
+        uploadedDocTypes: typesByAthlete[r.id] ?? [],
+        uploadedCount: (typesByAthlete[r.id] ?? []).length,
       }))
     );
+  };
+
+  const handleViewDocument = async (athleteId: string, docType: string) => {
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .createSignedUrl(`${athleteId}/${docType}.pdf`, 60);
+    if (error || !data) {
+      setActionMessage(error?.message ?? "Couldn't open that document.");
+      return;
+    }
+    window.open(data.signedUrl, '_blank');
   };
 
   useEffect(() => {
@@ -205,6 +227,14 @@ export default function CoachAthletesPage() {
                         <span className="text-xs text-neutral-500">{a.uploadedCount}/5 uploaded</span>
                         <Button
                           type="button"
+                          variant="outline"
+                          className="text-xs h-8"
+                          onClick={() => setExpandedAthlete(expandedAthlete === a.id ? null : a.id)}
+                        >
+                          {expandedAthlete === a.id ? 'Hide Documents' : 'View Documents'}
+                        </Button>
+                        <Button
+                          type="button"
                           disabled={a.uploadedCount < 5 || a.document_compile_status !== 'not_ready'}
                           onClick={() => handleCompile(a.id)}
                           className="bg-green-600 hover:bg-green-700 disabled:bg-neutral-200 text-xs h-8"
@@ -217,6 +247,32 @@ export default function CoachAthletesPage() {
                         </Button>
                       </div>
                     </div>
+
+                    {expandedAthlete === a.id && (
+                      <div className="mt-3 pt-3 border-t border-neutral-200 space-y-1.5">
+                        {DOC_TYPES.map((d) => {
+                          const uploaded = a.uploadedDocTypes.includes(d.type);
+                          return (
+                            <div key={d.type} className="flex items-center justify-between text-xs">
+                              <span className={uploaded ? 'text-neutral-700' : 'text-neutral-400'}>
+                                {uploaded ? '✓' : '○'} {d.label}
+                              </span>
+                              {uploaded ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleViewDocument(a.id, d.type)}
+                                  className="text-orange-600 hover:text-orange-700 font-medium underline"
+                                >
+                                  View
+                                </button>
+                              ) : (
+                                <span className="text-neutral-300">Not uploaded</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

@@ -3,6 +3,14 @@ import { Mail, Eye, CheckCircle2, Download, Send, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Button } from '@/components/ui/button';
 
+const DOC_TYPES = [
+  { type: 'medical_clearance', label: 'Medical Clearance Certificate' },
+  { type: 'academic_record', label: 'Academic Record / Grade Sheet' },
+  { type: 'parental_consent', label: 'Parental Consent Form' },
+  { type: 'eligibility_form', label: 'Sports Eligibility Form' },
+  { type: 'id_photo', label: 'ID Photo (2x2)' },
+];
+
 interface AthleteRow {
   id: string;
   full_name: string;
@@ -10,6 +18,7 @@ interface AthleteRow {
   sport: string | null;
   document_compile_status: string;
   updated_at: string;
+  uploadedDocTypes: string[];
 }
 
 interface SportGroup {
@@ -23,7 +32,19 @@ export function AthleteGalleryContent() {
   const [athletes, setAthletes] = useState<AthleteRow[]>([]);
   const [coachBySport, setCoachBySport] = useState<Record<string, string>>({});
   const [expandedSport, setExpandedSport] = useState<string | null>(null);
+  const [expandedAthleteDocs, setExpandedAthleteDocs] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  const handleViewDocument = async (athleteId: string, docType: string) => {
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .createSignedUrl(`${athleteId}/${docType}.pdf`, 60);
+    if (error || !data) {
+      setMessage(error?.message ?? "Couldn't open that document.");
+      return;
+    }
+    window.open(data.signedUrl, '_blank');
+  };
 
   const load = async () => {
     const { data } = await supabase
@@ -31,7 +52,21 @@ export function AthleteGalleryContent() {
       .select('id, full_name, email, sport, document_compile_status, updated_at')
       .eq('role', 'student')
       .in('document_compile_status', ['submitted_to_admin', 'staff_approved', 'sent_to_registrar']);
-    setAthletes(data ?? []);
+
+    const ids = (data ?? []).map((a) => a.id);
+    let typesByAthlete: Record<string, string[]> = {};
+    if (ids.length > 0) {
+      const { data: docs } = await supabase
+        .from('document_submissions')
+        .select('user_id, doc_type')
+        .in('user_id', ids)
+        .neq('status', 'missing');
+      (docs ?? []).forEach((d) => {
+        typesByAthlete[d.user_id] = [...(typesByAthlete[d.user_id] ?? []), d.doc_type];
+      });
+    }
+
+    setAthletes((data ?? []).map((a) => ({ ...a, uploadedDocTypes: typesByAthlete[a.id] ?? [] })));
 
     const { data: coaches } = await supabase.from('profiles').select('sport, full_name').eq('role', 'coach');
     setCoachBySport(Object.fromEntries((coaches ?? []).filter((c) => c.sport).map((c) => [c.sport as string, c.full_name])));
@@ -142,15 +177,53 @@ export function AthleteGalleryContent() {
                 {expandedSport === g.sport ? (
                   <div className="space-y-2 mt-3">
                     {g.athletes.map((a) => (
-                      <div key={a.id} className="flex items-center justify-between text-sm bg-neutral-50 rounded-lg px-3 py-2">
-                        <span>{a.full_name} — {a.email}</span>
-                        <Button
-                          type="button"
-                          className="h-7 text-xs bg-green-600 hover:bg-green-700"
-                          onClick={() => handleApproveOne(a.id)}
-                        >
-                          Approve
-                        </Button>
+                      <div key={a.id} className="bg-neutral-50 rounded-lg px-3 py-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span>{a.full_name} — {a.email}</span>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="h-7 text-xs"
+                              onClick={() => setExpandedAthleteDocs(expandedAthleteDocs === a.id ? null : a.id)}
+                            >
+                              {expandedAthleteDocs === a.id ? 'Hide Docs' : 'View Docs'}
+                            </Button>
+                            <Button
+                              type="button"
+                              className="h-7 text-xs bg-green-600 hover:bg-green-700"
+                              onClick={() => handleApproveOne(a.id)}
+                            >
+                              Approve
+                            </Button>
+                          </div>
+                        </div>
+
+                        {expandedAthleteDocs === a.id && (
+                          <div className="mt-2 pt-2 border-t border-neutral-200 space-y-1">
+                            {DOC_TYPES.map((d) => {
+                              const uploaded = a.uploadedDocTypes.includes(d.type);
+                              return (
+                                <div key={d.type} className="flex items-center justify-between text-xs">
+                                  <span className={uploaded ? 'text-neutral-700' : 'text-neutral-400'}>
+                                    {uploaded ? '✓' : '○'} {d.label}
+                                  </span>
+                                  {uploaded ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleViewDocument(a.id, d.type)}
+                                      className="text-orange-600 hover:text-orange-700 font-medium underline"
+                                    >
+                                      View
+                                    </button>
+                                  ) : (
+                                    <span className="text-neutral-300">Not uploaded</span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     ))}
                     <Button

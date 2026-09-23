@@ -81,6 +81,18 @@ export default function RegistrarDashboardPage() {
   };
 
   const [revisionTarget, setRevisionTarget] = useState<Athlete | null>(null);
+  const [expandedAthlete, setExpandedAthlete] = useState<string | null>(null);
+
+  const handleViewDocument = async (athleteId: string, docType: string) => {
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .createSignedUrl(`${athleteId}/${docType}.pdf`, 60);
+    if (error || !data) {
+      setMessage(error?.message ?? "Couldn't open that document.");
+      return;
+    }
+    window.open(data.signedUrl, '_blank');
+  };
 
   const submitRevision = async (reason: string) => {
     if (!revisionTarget) return;
@@ -220,10 +232,42 @@ export default function RegistrarDashboardPage() {
                               </span>
                             ))}
                           </p>
+
+                          {expandedAthlete === a.id && (
+                            <div className="rounded-lg bg-neutral-50 border border-neutral-100 p-3 mb-3 space-y-1.5">
+                              {REQUIRED_DOCS.map((d) => {
+                                const uploaded = a.uploadedDocTypes.includes(d.type);
+                                return (
+                                  <div key={d.type} className="flex items-center justify-between text-xs">
+                                    <span className={uploaded ? 'text-neutral-700' : 'text-neutral-400'}>
+                                      {uploaded ? '✓' : '○'} {d.label}
+                                    </span>
+                                    {uploaded ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleViewDocument(a.id, d.type)}
+                                        className="text-orange-600 hover:text-orange-700 font-medium underline"
+                                      >
+                                        View
+                                      </button>
+                                    ) : (
+                                      <span className="text-neutral-300">Not uploaded</span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+
                           <div className="flex gap-2">
-                            <Button type="button" variant="outline" className="text-xs h-8">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="text-xs h-8"
+                              onClick={() => setExpandedAthlete(expandedAthlete === a.id ? null : a.id)}
+                            >
                               <Eye className="w-3.5 h-3.5 mr-1.5" />
-                              View Details & Documents
+                              {expandedAthlete === a.id ? 'Hide Documents' : 'View Details & Documents'}
                             </Button>
                             <Button
                               type="button"
