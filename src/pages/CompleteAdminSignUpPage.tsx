@@ -46,6 +46,7 @@ export default function CompleteAdminSignUpPage() {
         return;
       }
 
+      await supabase.from('profiles').update({ terms_accepted_at: new Date().toISOString() }).eq('id', user.id);
       await fetchProfile();
       navigate('/admin-verify');
     }

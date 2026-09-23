@@ -85,6 +85,7 @@ export default function CoachProfileSetupPage() {
       sport: effectiveSport || null,
       role: 'coach',
       email: effectiveEmail,
+      terms_accepted_at: new Date().toISOString(),
     });
 
     if (upsertError) {
@@ -122,8 +123,8 @@ export default function CoachProfileSetupPage() {
     <div className="min-h-screen flex flex-col bg-white">
       <SiteHeader />
 
-      <main className="flex-1 flex items-start justify-center px-4 py-16">
-        <div className="w-full max-w-md bg-white border border-neutral-200 rounded-xl shadow-sm p-8">
+      <main className="flex-1 flex items-start justify-center px-4 py-8 sm:py-16">
+        <div className="w-full max-w-md bg-white border border-neutral-200 rounded-xl shadow-sm p-6 sm:p-8">
           <div className="flex flex-col items-center text-center mb-6">
             <div className="w-14 h-14 rounded-full bg-orange-500 flex items-center justify-center mb-4">
               <Trophy className="w-6 h-6 text-white" />

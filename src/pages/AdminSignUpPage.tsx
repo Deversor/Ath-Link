@@ -68,6 +68,11 @@ export default function AdminSignUpPage() {
       return;
     }
 
+    const uid = (await supabase.auth.getUser()).data.user?.id;
+    if (uid) {
+      await supabase.from('profiles').update({ terms_accepted_at: new Date().toISOString() }).eq('id', uid);
+    }
+
     await fetchProfile();
     navigate('/admin-verify');
   };

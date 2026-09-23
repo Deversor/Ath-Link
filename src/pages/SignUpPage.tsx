@@ -114,6 +114,7 @@ export default function SignUpPage() {
           email: values.email,
           full_name: values.fullName,
           role: 'facility_requester',
+          terms_accepted_at: new Date().toISOString(),
         });
       }
       const pending = sessionStorage.getItem('pendingReservationIntent');

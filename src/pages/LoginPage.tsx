@@ -1,8 +1,7 @@
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import { Mail, Lock, Trophy, ShieldCheck, HelpCircle, X } from 'lucide-react';
+import { Mail, Lock, Trophy, HelpCircle } from 'lucide-react';
 import { loginSchema, type LoginFormValues } from '../lib/schemas/loginSchema';
 import { useAuthStore } from '../store/useAuthStore';
 import { ROLE_HOME, isPrivilegedRole } from '../lib/roleHome';
@@ -11,8 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PasswordInput from '../components/common/PasswordInput';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import GoogleSignInButton from '../components/auth/GoogleSignInButton';
+
+const MAX_ATTEMPTS = 5;
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -20,11 +20,7 @@ export default function LoginPage() {
   const oauthError = (location.state as { error?: string } | null)?.error;
   const [searchParams] = useSearchParams();
   const wasDeactivated = searchParams.get('deactivated') === '1';
-  const { signIn, isLoading, error, lockedUntil } = useAuthStore();
-
-  const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
-  const [hasAgreed, setHasAgreed] = useState(false);
-  const [pendingValues, setPendingValues] = useState<LoginFormValues | null>(null);
+  const { signIn, isLoading, error, lockedUntil, failedAttempts } = useAuthStore();
 
   const {
     register,
@@ -35,40 +31,32 @@ export default function LoginPage() {
   });
 
   const isLocked = !!lockedUntil && Date.now() < lockedUntil;
+  const attemptsLeft = Math.max(0, MAX_ATTEMPTS - failedAttempts);
 
-  // Step 1: email/password pass validation -> hold them and open the consent modal
-  const onValidated = (values: LoginFormValues) => {
-    setPendingValues(values);
-    setHasAgreed(false);
-    setIsPrivacyModalOpen(true);
-  };
+  // Credentials are checked immediately on submit — no gate in front of them.
+  const onSubmit = async (values: LoginFormValues) => {
+    const { success } = await signIn(values.email, values.password);
+    if (!success) return;
 
-  // Step 2: user agrees inside the modal -> now actually sign in
-  const confirmAndSignIn = async () => {
-    if (!pendingValues) return;
-    const { success } = await signIn(pendingValues.email, pendingValues.password);
-    if (success) {
-      setIsPrivacyModalOpen(false);
-      supabase.rpc('log_activity', {
-        p_action_type: 'user_login',
-        p_entity_type: 'auth',
-        p_description: `Successful login`,
-      });
+    supabase.rpc('log_activity', {
+      p_action_type: 'user_login',
+      p_entity_type: 'auth',
+      p_description: `Successful login`,
+    });
 
-      const profile = useAuthStore.getState().profile;
-      const intendedFrom = (location.state as { from?: string } | null)?.from;
+    const profile = useAuthStore.getState().profile;
+    const intendedFrom = (location.state as { from?: string } | null)?.from;
 
-      if (profile && isPrivilegedRole(profile.role)) {
-        navigate('/admin-verify', intendedFrom ? { state: { from: intendedFrom } } : undefined);
-      } else if (profile) {
-        const pendingReservation = sessionStorage.getItem('pendingReservationIntent');
-        if (pendingReservation) {
-          navigate('/facility-reservation/reserve');
-        } else if (intendedFrom) {
-          navigate(intendedFrom);
-        } else {
-          navigate(ROLE_HOME[profile.role]);
-        }
+    if (profile && isPrivilegedRole(profile.role)) {
+      navigate('/admin-verify', intendedFrom ? { state: { from: intendedFrom } } : undefined);
+    } else if (profile) {
+      const pendingReservation = sessionStorage.getItem('pendingReservationIntent');
+      if (pendingReservation) {
+        navigate('/facility-reservation/reserve');
+      } else if (intendedFrom) {
+        navigate(intendedFrom);
+      } else {
+        navigate(ROLE_HOME[profile.role]);
       }
     }
   };
@@ -93,14 +81,8 @@ export default function LoginPage() {
         </h1>
 
         <p className="hidden md:block text-neutral-400 max-w-sm mb-10">
-          Access your personalized portal to manage training schedules,
-          equipment, wellness programs, and more.
+          Access your personalized portal to manage schedules, requirements, and more.
         </p>
-
-        <div className="hidden md:inline-flex items-center gap-2 w-fit px-3 py-2 rounded-lg border border-neutral-700 text-sm text-neutral-300">
-          <ShieldCheck className="w-4 h-4 text-orange-500" />
-          Protected · 5-attempt lockout · 15-min cooldown
-        </div>
 
         <p className="hidden md:block absolute bottom-6 left-10 text-xs text-neutral-500">
           © 2026 Palawan State University Sports Division
@@ -125,7 +107,7 @@ export default function LoginPage() {
             </p>
           )}
 
-          <form onSubmit={handleSubmit(onValidated)} noValidate className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
             {/* Email */}
             <div>
               <Label htmlFor="email" className="mb-1.5 block">
@@ -173,6 +155,13 @@ export default function LoginPage() {
             {error && (
               <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
                 {error}
+                {!isLocked && failedAttempts > 0 && (
+                  <span className="block mt-0.5 text-xs text-red-500">
+                    {attemptsLeft > 0
+                      ? `${attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} remaining before your account is temporarily locked.`
+                      : 'This was your last attempt before a temporary lockout.'}
+                  </span>
+                )}
               </p>
             )}
 
@@ -199,11 +188,6 @@ export default function LoginPage() {
               Sign up
             </Link>
           </p>
-          <p className="text-center text-sm mt-2">
-            <Link to="/facility-reservation" className="text-neutral-500 underline hover:text-neutral-700">
-              Facility Booking Portal
-            </Link>
-          </p>
         </div>
       </div>
 
@@ -214,82 +198,6 @@ export default function LoginPage() {
       >
         <HelpCircle className="w-5 h-5" />
       </button>
-
-      {/* Privacy consent modal — shown after email/password pass validation, before sign-in actually fires */}
-      {isPrivacyModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setIsPrivacyModalOpen(false)}
-          />
-          <div className="relative w-full max-w-md rounded-xl bg-white shadow-xl p-6">
-            <button
-              type="button"
-              aria-label="Close"
-              onClick={() => setIsPrivacyModalOpen(false)}
-              className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-600"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <h3 className="font-semibold text-neutral-900 mb-1">Privacy Notice (RA 10173)</h3>
-            <p className="text-neutral-500 text-sm leading-relaxed mb-4">
-              PalawanSU Sports Office collects your institutional login data
-              to verify your affiliation and provide access to portal
-              services. We process your data in compliance with the Data
-              Privacy Act of 2012 (RA 10173). Your data is kept secure and
-              will not be shared without your consent.{' '}
-              <Link to="/privacy-policy" target="_blank" className="text-orange-600 underline hover:text-orange-700">
-                Read our full Privacy Policy
-              </Link>{' '}
-              or{' '}
-              <Link to="/terms" target="_blank" className="text-orange-600 underline hover:text-orange-700">
-                Terms of Service
-              </Link>
-              .
-            </p>
-
-            <div className="flex items-start gap-2 mb-5">
-              <Checkbox
-                id="modalAgree"
-                className="mt-0.5"
-                checked={hasAgreed}
-                onCheckedChange={(checked: boolean | 'indeterminate') =>
-                  setHasAgreed(checked === true)
-                }
-              />
-              <Label htmlFor="modalAgree" className="text-sm font-normal text-neutral-700 leading-snug">
-                I have read and agree to the Privacy Notice.
-              </Label>
-            </div>
-
-            {error && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-4">
-                {error}
-              </p>
-            )}
-
-            <div className="flex gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={() => setIsPrivacyModalOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                disabled={!hasAgreed || isLoading}
-                onClick={confirmAndSignIn}
-                className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300"
-              >
-                {isLoading ? 'Signing in…' : 'Agree & Sign In'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

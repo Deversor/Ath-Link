@@ -27,6 +27,7 @@ export interface Profile {
   department: string | null;
   position: string | null;
   is_active: boolean;
+  terms_accepted_at: string | null;
 }
 
 interface AuthState {

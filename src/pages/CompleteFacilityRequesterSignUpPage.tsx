@@ -28,6 +28,7 @@ export default function CompleteFacilityRequesterSignUpPage() {
         email: user.email,
         full_name: fullName,
         role: 'facility_requester',
+        terms_accepted_at: new Date().toISOString(),
       });
 
       const pending = sessionStorage.getItem('pendingReservationIntent');

@@ -27,7 +27,10 @@ export default function ProfileSetupPage() {
   const { user, isInitialized, init } = useAuthStore();
   const [saveError, setSaveError] = useState<string | null>(null);
 
-
+  // This page can be reached two ways: right after signing up in the same
+  // session (handoff has everything), or by clicking the confirmation link
+  // in an email (a fresh page load — nothing has called init() yet, and
+  // the person's name/sport live in their account metadata instead).
   useEffect(() => {
     if (!isInitialized) init();
   }, [isInitialized, init]);
@@ -85,6 +88,7 @@ export default function ProfileSetupPage() {
       emergency_contact_name: values.emergencyContactName,
       emergency_contact_phone: values.emergencyContactPhone,
       bio: values.bio || null,
+      terms_accepted_at: new Date().toISOString(),
     });
 
     if (error) {
@@ -116,8 +120,8 @@ export default function ProfileSetupPage() {
     <div className="min-h-screen flex flex-col bg-white">
       <SiteHeader />
 
-      <main className="flex-1 flex items-start justify-center px-4 py-16">
-        <div className="w-full max-w-2xl bg-white border border-neutral-200 rounded-xl shadow-sm p-8">
+      <main className="flex-1 flex items-start justify-center px-4 py-8 sm:py-16">
+        <div className="w-full max-w-2xl bg-white border border-neutral-200 rounded-xl shadow-sm p-6 sm:p-8">
           <div className="flex flex-col items-center text-center mb-6">
             <div className="w-14 h-14 rounded-full bg-orange-500 flex items-center justify-center mb-4">
               <Trophy className="w-6 h-6 text-white" />

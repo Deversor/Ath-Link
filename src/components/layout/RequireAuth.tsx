@@ -2,6 +2,7 @@ import { type ReactNode, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import { ROLE_HOME, isPrivilegedRole, type AppRole } from '../../lib/roleHome';
+import TermsAcceptanceGate from '../common/TermsAcceptanceGate';
 
 export default function RequireAuth({
   children,
@@ -54,6 +55,13 @@ export default function RequireAuth({
   // to every portal page immediately, even with a valid session.
   if (profile && profile.is_active === false) {
     return <Navigate to="/login?deactivated=1" replace />;
+  }
+
+  // Accounts created before the Terms/Privacy consent checkbox existed
+  // never actually agreed to anything — this catches them retroactively,
+  // once, without needing to touch their row manually.
+  if (profile && !profile.terms_accepted_at) {
+    return <TermsAcceptanceGate />;
   }
 
   // Maintenance mode (Super Admin → System Settings) locks everyone except

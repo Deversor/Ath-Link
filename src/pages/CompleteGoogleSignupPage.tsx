@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Trophy, User as UserIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuthStore';
@@ -21,6 +21,7 @@ export default function CompleteGoogleSignupPage() {
 
   const [role, setRole] = useState<Role>('student');
   const [sport, setSport] = useState('');
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -42,6 +43,13 @@ export default function CompleteGoogleSignupPage() {
 
   const handleContinue = async () => {
     setError(null);
+
+    if (!agreed) {
+      setError('Please agree to the Terms of Service and Privacy Policy to continue.');
+      return;
+    }
+
+    const acceptedAt = new Date().toISOString();
 
     if (role === 'student') {
       const { data: isWhitelisted } = await supabase.rpc('is_email_whitelisted', { p_email: email });
@@ -71,6 +79,7 @@ export default function CompleteGoogleSignupPage() {
         email,
         full_name: fullName,
         role: 'facility_requester',
+        terms_accepted_at: acceptedAt,
       });
     }
     setIsSubmitting(false);
@@ -139,6 +148,27 @@ export default function CompleteGoogleSignupPage() {
         {error && (
           <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-4">{error}</p>
         )}
+
+        <div className="flex items-start gap-2 mb-4">
+          <input
+            type="checkbox"
+            id="agreeToTerms"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            className="mt-0.5"
+          />
+          <label htmlFor="agreeToTerms" className="text-xs text-neutral-600 leading-snug">
+            I agree to the{' '}
+            <Link to="/terms" target="_blank" className="text-orange-600 underline hover:text-orange-700">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link to="/privacy-policy" target="_blank" className="text-orange-600 underline hover:text-orange-700">
+              Privacy Policy
+            </Link>
+            .
+          </label>
+        </div>
 
         <Button
           type="button"
