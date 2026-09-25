@@ -3,6 +3,7 @@ import { Users, FileText, GraduationCap, ChevronDown, ChevronRight, Eye, Check, 
 import RegistrarPortalLayout from '../../components/layout/RegistrarPortalLayout';
 import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
+import { getCurrentAcademicTerm, slugifyTerm } from '../../lib/academicTerm';
 import { Button } from '@/components/ui/button';
 
 const REQUIRED_DOCS = [
@@ -45,10 +46,12 @@ export default function RegistrarDashboardPage() {
     const ids = (profiles ?? []).map((p) => p.id);
     let docsByAthlete: Record<string, string[]> = {};
     if (ids.length > 0) {
+      const term = await getCurrentAcademicTerm();
       const { data: docs } = await supabase
         .from('document_submissions')
         .select('user_id, doc_type')
         .in('user_id', ids)
+        .eq('academic_term', term)
         .neq('status', 'missing');
       docsByAthlete = {};
       (docs ?? []).forEach((d) => {
@@ -74,9 +77,46 @@ export default function RegistrarDashboardPage() {
   const totalDocuments = athletes.reduce((sum, a) => sum + a.uploadedDocTypes.length, 0);
   const graduatingCount = athletes.filter((a) => a.year_level?.toLowerCase().includes('4th')).length;
 
+  const recordEligibilityHistory = async (approvedAthletes: Athlete[]) => {
+    if (approvedAthletes.length === 0) return;
+
+    const { data: termSetting } = await supabase
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'academic_term')
+      .maybeSingle();
+    const academicTerm = termSetting?.value ?? 'Unspecified Term';
+
+    const { data: gwaRecords } = await supabase
+      .from('gwa_records')
+      .select('profile_id, student_id_text, gwa, pass_rate, eligibility_met, created_at')
+      .order('created_at', { ascending: false });
+
+    const rows = approvedAthletes.map((a) => {
+      const match = (gwaRecords ?? []).find(
+        (g) => g.profile_id === a.id || (a.student_id && g.student_id_text === a.student_id)
+      );
+      return {
+        profile_id: a.id,
+        full_name: a.full_name,
+        student_id: a.student_id,
+        sport: a.sport,
+        academic_term: academicTerm,
+        gwa: match?.gwa ?? null,
+        pass_rate: match?.pass_rate ?? null,
+        eligibility_met: match?.eligibility_met ?? null,
+        approved_by: user?.id,
+      };
+    });
+
+    await supabase.from('eligibility_history').insert(rows);
+  };
+
   const handleApprove = async (athleteId: string) => {
+    const athlete = athletes.find((a) => a.id === athleteId);
     await supabase.from('profiles').update({ document_compile_status: 'registrar_approved' }).eq('id', athleteId);
-    setMessage('Athlete approved.');
+    if (athlete) await recordEligibilityHistory([athlete]);
+    setMessage('Athlete approved — permanently recorded in Eligibility History.');
     load();
   };
 
@@ -84,9 +124,10 @@ export default function RegistrarDashboardPage() {
   const [expandedAthlete, setExpandedAthlete] = useState<string | null>(null);
 
   const handleViewDocument = async (athleteId: string, docType: string) => {
+    const term = await getCurrentAcademicTerm();
     const { data, error } = await supabase.storage
       .from('documents')
-      .createSignedUrl(`${athleteId}/${docType}.pdf`, 60);
+      .createSignedUrl(`${athleteId}/${slugifyTerm(term)}/${docType}.pdf`, 60);
     if (error || !data) {
       setMessage(error?.message ?? "Couldn't open that document.");
       return;
@@ -128,7 +169,8 @@ export default function RegistrarDashboardPage() {
   const handleApproveAll = async (group: SportGroup) => {
     const ids = group.athletes.map((a) => a.id);
     await supabase.from('profiles').update({ document_compile_status: 'registrar_approved' }).in('id', ids);
-    setMessage(`Approved all ${group.athletes.length} ${group.sport} athletes.`);
+    await recordEligibilityHistory(group.athletes);
+    setMessage(`Approved all ${group.athletes.length} ${group.sport} athletes — permanently recorded in Eligibility History.`);
     load();
   };
 

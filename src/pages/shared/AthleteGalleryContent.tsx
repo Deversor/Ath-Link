@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Mail, Eye, CheckCircle2, Download, Send, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { getCurrentAcademicTerm, slugifyTerm } from '../../lib/academicTerm';
 import { Button } from '@/components/ui/button';
 
 const DOC_TYPES = [
@@ -36,9 +37,10 @@ export function AthleteGalleryContent() {
   const [message, setMessage] = useState<string | null>(null);
 
   const handleViewDocument = async (athleteId: string, docType: string) => {
+    const term = await getCurrentAcademicTerm();
     const { data, error } = await supabase.storage
       .from('documents')
-      .createSignedUrl(`${athleteId}/${docType}.pdf`, 60);
+      .createSignedUrl(`${athleteId}/${slugifyTerm(term)}/${docType}.pdf`, 60);
     if (error || !data) {
       setMessage(error?.message ?? "Couldn't open that document.");
       return;
@@ -56,10 +58,12 @@ export function AthleteGalleryContent() {
     const ids = (data ?? []).map((a) => a.id);
     let typesByAthlete: Record<string, string[]> = {};
     if (ids.length > 0) {
+      const term = await getCurrentAcademicTerm();
       const { data: docs } = await supabase
         .from('document_submissions')
         .select('user_id, doc_type')
         .in('user_id', ids)
+        .eq('academic_term', term)
         .neq('status', 'missing');
       (docs ?? []).forEach((d) => {
         typesByAthlete[d.user_id] = [...(typesByAthlete[d.user_id] ?? []), d.doc_type];

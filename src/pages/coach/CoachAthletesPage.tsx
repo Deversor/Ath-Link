@@ -3,6 +3,7 @@ import { FileText, Users, CheckCircle2, Send, Edit3 } from 'lucide-react';
 import CoachPortalLayout from '../../components/layout/CoachPortalLayout';
 import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
+import { getCurrentAcademicTerm, slugifyTerm } from '../../lib/academicTerm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -57,11 +58,13 @@ export default function CoachAthletesPage() {
       return;
     }
 
+    const term = await getCurrentAcademicTerm();
     const ids = roster.map((r) => r.id);
     const { data: docs } = await supabase
       .from('document_submissions')
       .select('user_id, doc_type, status')
       .in('user_id', ids.length > 0 ? ids : ['00000000-0000-0000-0000-000000000000'])
+      .eq('academic_term', term)
       .neq('status', 'missing');
 
     const typesByAthlete: Record<string, string[]> = {};
@@ -80,9 +83,10 @@ export default function CoachAthletesPage() {
   };
 
   const handleViewDocument = async (athleteId: string, docType: string) => {
+    const term = await getCurrentAcademicTerm();
     const { data, error } = await supabase.storage
       .from('documents')
-      .createSignedUrl(`${athleteId}/${docType}.pdf`, 60);
+      .createSignedUrl(`${athleteId}/${slugifyTerm(term)}/${docType}.pdf`, 60);
     if (error || !data) {
       setActionMessage(error?.message ?? "Couldn't open that document.");
       return;

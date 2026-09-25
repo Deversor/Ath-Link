@@ -13,6 +13,7 @@ import PortalLayout from '../../components/layout/PortalLayout';
 import PortalHero from '../../components/layout/PortalHero';
 import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
+import { getCurrentAcademicTerm, slugifyTerm } from '../../lib/academicTerm';
 import { Button } from '@/components/ui/button';
 
 const DEADLINE = new Date('2026-05-15');
@@ -33,16 +34,20 @@ interface DocRow {
 export default function DocumentsPage() {
   const { user, profile } = useAuthStore();
   const [docs, setDocs] = useState<DocRow[]>([]);
+  const [academicTerm, setAcademicTerm] = useState<string | null>(null);
   const [uploadingType, setUploadingType] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
 
   const loadDocs = async () => {
     if (!user) return;
+    const term = await getCurrentAcademicTerm();
+    setAcademicTerm(term);
     const { data } = await supabase
       .from('document_submissions')
       .select('doc_type, status')
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .eq('academic_term', term);
     setDocs(data ?? []);
   };
 
@@ -73,7 +78,8 @@ export default function DocumentsPage() {
     }
 
     setUploadingType(docType);
-    const path = `${user.id}/${docType}.pdf`;
+    const term = academicTerm ?? (await getCurrentAcademicTerm());
+    const path = `${user.id}/${slugifyTerm(term)}/${docType}.pdf`;
 
     const { error: uploadErr } = await supabase.storage
       .from('documents')
@@ -92,8 +98,9 @@ export default function DocumentsPage() {
         file_path: path,
         status: 'uploaded',
         uploaded_at: new Date().toISOString(),
+        academic_term: term,
       },
-      { onConflict: 'user_id,doc_type' }
+      { onConflict: 'user_id,doc_type,academic_term' }
     );
 
     await loadDocs();

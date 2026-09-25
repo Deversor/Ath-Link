@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Settings, Globe, ShieldCheck, Bell, Key } from 'lucide-react';
+import { Settings, Globe, ShieldCheck, Bell, Key, Archive, RotateCcw } from 'lucide-react';
 import SuperAdminPortalLayout from '../../components/layout/SuperAdminPortalLayout';
 import { supabase } from '../../lib/supabase';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,23 @@ export default function SuperAdminSystemSettingsPage() {
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [showKeysModal, setShowKeysModal] = useState(false);
+  const [showRolloverConfirm, setShowRolloverConfirm] = useState(false);
+  const [isRollingOver, setIsRollingOver] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+
+  const handleStartNewSemester = async () => {
+    setIsRollingOver(true);
+    await supabase
+      .from('profiles')
+      .update({ document_compile_status: 'not_ready', revision_note: null })
+      .eq('role', 'student')
+      .neq('document_compile_status', 'not_ready');
+    setIsRollingOver(false);
+    setShowRolloverConfirm(false);
+    setMessage(
+      'New semester started — every athlete now needs to resubmit documents. All past approvals remain safely recorded in Eligibility History.'
+    );
+  };
 
   const load = async () => {
     const { data } = await supabase.from('system_settings').select('key, value');
@@ -117,6 +133,38 @@ export default function SuperAdminSystemSettingsPage() {
             </Button>
           )}
         </SettingRow>
+
+        <SettingRow title="Academic Term" description={settings.academic_term || 'Not set'}>
+          {editingKey === 'academic_term' ? (
+            <InlineEditor
+              defaultValue={settings.academic_term ?? ''}
+              onCancel={() => setEditingKey(null)}
+              onSave={(v) => saveSetting('academic_term', v)}
+            />
+          ) : (
+            <Button type="button" variant="outline" onClick={() => setEditingKey('academic_term')}>
+              Change
+            </Button>
+          )}
+        </SettingRow>
+      </section>
+
+      {/* Semester Rollover — resets live document status for a new term while
+          preserving every past approval permanently in Eligibility History */}
+      <section className="bg-white border border-neutral-200 rounded-xl p-6">
+        <h2 className="flex items-center gap-2 font-semibold text-neutral-900 mb-1">
+          <Archive className="w-4 h-4 text-orange-500" />
+          Semester Rollover
+        </h2>
+        <p className="text-xs text-neutral-500 mb-4">
+          When a new semester begins, athletes need to resubmit their documents. Approved records from past
+          semesters are never lost — they're permanently kept in the Registrar's Eligibility History regardless of
+          this reset.
+        </p>
+        <Button type="button" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" onClick={() => setShowRolloverConfirm(true)}>
+          <RotateCcw className="w-4 h-4 mr-1.5" />
+          Start New Semester
+        </Button>
       </section>
 
       {/* Security & Authentication — Admin Login Keys is real, rest are stored-but-not-enforced */}
@@ -199,6 +247,18 @@ export default function SuperAdminSystemSettingsPage() {
       </section>
 
       {showKeysModal && <AdminKeysModal onClose={() => setShowKeysModal(false)} onSaved={setMessage} />}
+
+      {showRolloverConfirm && (
+        <ConfirmDialog
+          title="Start a new semester?"
+          description="Every student athlete's document status will reset to Not Ready, requiring them to resubmit. This cannot be undone — but every past approval stays permanently safe in Eligibility History and is never affected by this."
+          confirmLabel="Start New Semester"
+          variant="danger"
+          isLoading={isRollingOver}
+          onConfirm={handleStartNewSemester}
+          onClose={() => setShowRolloverConfirm(false)}
+        />
+      )}
 
       {showMaintenanceConfirm && (
         <ConfirmDialog
