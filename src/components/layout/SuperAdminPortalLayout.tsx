@@ -9,6 +9,7 @@ import {
   Trophy as TrophyIcon,
   Clock,
   FileText,
+  Archive,
   Database,
   Settings,
 } from 'lucide-react';
@@ -26,6 +27,7 @@ const NAV_ITEMS = [
   { to: '/superadmin/sport-programs', label: 'Sport Programs', icon: TrophyIcon },
   { to: '/superadmin/system-logs', label: 'System Logs', icon: Clock },
   { to: '/superadmin/reports', label: 'Reports', icon: FileText },
+  { to: '/superadmin/document-archive', label: 'Document Archive', icon: Archive },
   { to: '/superadmin/database', label: 'Database', icon: Database },
   { to: '/superadmin/system-settings', label: 'System Settings', icon: Settings },
 ];

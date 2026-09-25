@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { LayoutDashboard, ShieldCheck, Building2, Calendar, Users, UserCog, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, ShieldCheck, Building2, Calendar, Users, UserCog, BarChart3, Archive } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import AppShellLayout from './AppShellLayout';
 
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { to: '/staff-admin/athlete-gallery', label: 'Athlete Gallery', icon: Users },
   { to: '/staff-admin/coach-management', label: 'Coach Management', icon: UserCog },
   { to: '/staff-admin/reports', label: 'Reports', icon: BarChart3 },
+  { to: '/staff-admin/document-archive', label: 'Document Archive', icon: Archive },
 ];
 
 export default function StaffAdminPortalLayout({ children }: { children: ReactNode }) {

@@ -11,6 +11,8 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import CheckEmailPage from './pages/CheckEmailPage';
 import CompleteAdminSignUpPage from './pages/CompleteAdminSignUpPage';
+import StaffAdminDocumentArchivePage from './pages/staff-admin/StaffAdminDocumentArchivePage';
+import SuperAdminDocumentArchivePage from './pages/super-admin/SuperAdminDocumentArchivePage';
 import CompleteFacilityRequesterSignUpPage from './pages/CompleteFacilityRequesterSignUpPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import CompleteGoogleSignupPage from './pages/CompleteGoogleSignupPage';
@@ -219,6 +221,14 @@ function App() {
             </RequireAuth>
           }
         />
+        <Route
+          path="/staff-admin/document-archive"
+          element={
+            <RequireAuth role="staff_admin">
+              <StaffAdminDocumentArchivePage />
+            </RequireAuth>
+          }
+        />
         {/* TODO Phase 3: /staff-admin/profile-settings */}
 
         {/* ── Super Admin portal ── */}
@@ -307,6 +317,14 @@ function App() {
           element={
             <RequireAuth role="superadmin">
               <SuperAdminReportsPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/superadmin/document-archive"
+          element={
+            <RequireAuth role="superadmin">
+              <SuperAdminDocumentArchivePage />
             </RequireAuth>
           }
         />
