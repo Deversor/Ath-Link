@@ -1,20 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Calendar, Activity, GraduationCap, User as UserIcon, Trophy } from 'lucide-react';
+import { FileText, Calendar } from 'lucide-react';
 import PortalLayout from '../../components/layout/PortalLayout';
 import PortalHero from '../../components/layout/PortalHero';
 import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
-
-const DOC_LABELS: Record<string, { label: string; icon: typeof Activity }> = {
-  medical_clearance: { label: 'Medical Clearance Certificate', icon: Activity },
-  academic_record: { label: 'Academic Record / Grade Sheet', icon: GraduationCap },
-  parental_consent: { label: 'Parental Consent Form', icon: FileText },
-  eligibility_form: { label: 'Sports Eligibility Form', icon: Trophy },
-  id_photo: { label: 'ID Photo (2x2)', icon: UserIcon },
-};
-
-const DOC_TYPES = Object.keys(DOC_LABELS);
+import { getCurrentAcademicTerm } from '../../lib/academicTerm';
+import { useSportDocumentRequirements } from '../../hooks/useSportDocumentRequirements';
 
 interface DocStatus {
   doc_type: string;
@@ -30,6 +22,7 @@ interface UpcomingSession {
 
 export default function DashboardPage() {
   const { profile } = useAuthStore();
+  const { requirements } = useSportDocumentRequirements(profile?.sport);
   const [docStatuses, setDocStatuses] = useState<DocStatus[]>([]);
   const [upcoming, setUpcoming] = useState<UpcomingSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,8 +33,10 @@ export default function DashboardPage() {
       const userId = sessionData.session?.user.id;
       if (!userId) return;
 
+      const term = await getCurrentAcademicTerm();
+
       const [{ data: docs }, { data: schedules }] = await Promise.all([
-        supabase.from('document_submissions').select('doc_type, status').eq('user_id', userId),
+        supabase.from('document_submissions').select('doc_type, status').eq('user_id', userId).eq('academic_term', term),
         supabase
           .from('practice_schedules')
           .select('id, schedule_date, start_time, location')
@@ -59,8 +54,9 @@ export default function DashboardPage() {
     load();
   }, [profile?.sport]);
 
-  const uploadedCount = DOC_TYPES.filter((type) =>
-    docStatuses.some((d) => d.doc_type === type && d.status !== 'missing')
+  const totalRequired = requirements.length;
+  const uploadedCount = requirements.filter((r) =>
+    docStatuses.some((d) => d.doc_type === r.doc_type && d.status !== 'missing')
   ).length;
 
   return (
@@ -74,33 +70,32 @@ export default function DashboardPage() {
           <h2 className="font-semibold text-neutral-900">Document Submission Tracker</h2>
         </div>
         <p className="text-sm text-neutral-500 mb-4">
-          Track the status of your required eligibility documents. All 5 must be uploaded before submission.
+          Track the status of your required eligibility documents. All {totalRequired} must be uploaded before submission.
         </p>
 
         <div className="flex items-center justify-between text-sm mb-1.5">
           <span className="text-neutral-600">Overall Progress</span>
-          <span className="text-orange-600 font-medium">{uploadedCount} / 5 uploaded</span>
+          <span className="text-orange-600 font-medium">{uploadedCount} / {totalRequired} uploaded</span>
         </div>
         <div className="h-2 rounded-full bg-neutral-100 overflow-hidden mb-4">
           <div
             className="h-full bg-orange-500 transition-all"
-            style={{ width: `${(uploadedCount / 5) * 100}%` }}
+            style={{ width: totalRequired > 0 ? `${(uploadedCount / totalRequired) * 100}%` : '0%' }}
           />
         </div>
 
         <div className="space-y-2">
-          {DOC_TYPES.map((type) => {
-            const doc = docStatuses.find((d) => d.doc_type === type);
+          {requirements.map((r) => {
+            const doc = docStatuses.find((d) => d.doc_type === r.doc_type);
             const isUploaded = doc && doc.status !== 'missing';
-            const { label, icon: Icon } = DOC_LABELS[type];
             return (
               <div
-                key={type}
+                key={r.doc_type}
                 className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-neutral-100 bg-neutral-50"
               >
                 <span className="flex items-center gap-2 text-sm text-neutral-700">
-                  <Icon className="w-4 h-4 text-neutral-400" />
-                  {label}
+                  <FileText className="w-4 h-4 text-neutral-400" />
+                  {r.label}
                 </span>
                 <span
                   className={`text-xs font-medium px-2 py-0.5 rounded-full ${
@@ -114,10 +109,10 @@ export default function DashboardPage() {
           })}
         </div>
 
-        {uploadedCount < 5 && (
+        {uploadedCount < totalRequired && (
           <div className="mt-4 flex items-center justify-between rounded-lg bg-amber-50 border border-amber-100 px-4 py-3">
             <div>
-              <p className="text-sm font-medium text-amber-800">{5 - uploadedCount} documents still needed</p>
+              <p className="text-sm font-medium text-amber-800">{totalRequired - uploadedCount} documents still needed</p>
               <p className="text-xs text-amber-700">Upload all required documents to submit to your coach.</p>
             </div>
             <Link

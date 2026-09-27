@@ -4,14 +4,6 @@ import { supabase } from '../../lib/supabase';
 import { getCurrentAcademicTerm, slugifyTerm } from '../../lib/academicTerm';
 import { Button } from '@/components/ui/button';
 
-const DOC_TYPES = [
-  { type: 'medical_clearance', label: 'Medical Clearance Certificate' },
-  { type: 'academic_record', label: 'Academic Record / Grade Sheet' },
-  { type: 'parental_consent', label: 'Parental Consent Form' },
-  { type: 'eligibility_form', label: 'Sports Eligibility Form' },
-  { type: 'id_photo', label: 'ID Photo (2x2)' },
-];
-
 interface AthleteRow {
   id: string;
   full_name: string;
@@ -29,8 +21,14 @@ interface SportGroup {
   latestUpdate: string;
 }
 
+interface DocRequirement {
+  doc_type: string;
+  label: string;
+}
+
 export function AthleteGalleryContent() {
   const [athletes, setAthletes] = useState<AthleteRow[]>([]);
+  const [requirementsBySport, setRequirementsBySport] = useState<Record<string, DocRequirement[]>>({});
   const [coachBySport, setCoachBySport] = useState<Record<string, string>>({});
   const [expandedSport, setExpandedSport] = useState<string | null>(null);
   const [expandedAthleteDocs, setExpandedAthleteDocs] = useState<string | null>(null);
@@ -71,6 +69,20 @@ export function AthleteGalleryContent() {
     }
 
     setAthletes((data ?? []).map((a) => ({ ...a, uploadedDocTypes: typesByAthlete[a.id] ?? [] })));
+
+    const sports = Array.from(new Set((data ?? []).map((a) => a.sport).filter(Boolean))) as string[];
+    if (sports.length > 0) {
+      const { data: reqs } = await supabase
+        .from('sport_document_requirements')
+        .select('sport, doc_type, label, sort_order')
+        .in('sport', sports)
+        .order('sort_order');
+      const bySport: Record<string, DocRequirement[]> = {};
+      (reqs ?? []).forEach((r) => {
+        bySport[r.sport] = [...(bySport[r.sport] ?? []), { doc_type: r.doc_type, label: r.label }];
+      });
+      setRequirementsBySport(bySport);
+    }
 
     const { data: coaches } = await supabase.from('profiles').select('sport, full_name').eq('role', 'coach');
     setCoachBySport(Object.fromEntries((coaches ?? []).filter((c) => c.sport).map((c) => [c.sport as string, c.full_name])));
@@ -205,17 +217,17 @@ export function AthleteGalleryContent() {
 
                         {expandedAthleteDocs === a.id && (
                           <div className="mt-2 pt-2 border-t border-neutral-200 space-y-1">
-                            {DOC_TYPES.map((d) => {
-                              const uploaded = a.uploadedDocTypes.includes(d.type);
+                            {(requirementsBySport[a.sport ?? ''] ?? []).map((d) => {
+                              const uploaded = a.uploadedDocTypes.includes(d.doc_type);
                               return (
-                                <div key={d.type} className="flex items-center justify-between text-xs">
+                                <div key={d.doc_type} className="flex items-center justify-between text-xs">
                                   <span className={uploaded ? 'text-neutral-700' : 'text-neutral-400'}>
                                     {uploaded ? '✓' : '○'} {d.label}
                                   </span>
                                   {uploaded ? (
                                     <button
                                       type="button"
-                                      onClick={() => handleViewDocument(a.id, d.type)}
+                                      onClick={() => handleViewDocument(a.id, d.doc_type)}
                                       className="text-orange-600 hover:text-orange-700 font-medium underline"
                                     >
                                       View

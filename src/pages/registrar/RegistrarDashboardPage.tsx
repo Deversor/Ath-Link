@@ -6,14 +6,6 @@ import { supabase } from '../../lib/supabase';
 import { getCurrentAcademicTerm, slugifyTerm } from '../../lib/academicTerm';
 import { Button } from '@/components/ui/button';
 
-const REQUIRED_DOCS = [
-  { type: 'medical_clearance', label: 'Medical Clearance' },
-  { type: 'academic_record', label: 'Grade Sheet' },
-  { type: 'parental_consent', label: 'Parental Consent' },
-  { type: 'eligibility_form', label: 'Eligibility Form' },
-  { type: 'id_photo', label: 'ID Photo' },
-];
-
 interface Athlete {
   id: string;
   full_name: string;
@@ -30,9 +22,15 @@ interface SportGroup {
   athletes: Athlete[];
 }
 
+interface DocRequirement {
+  doc_type: string;
+  label: string;
+}
+
 export default function RegistrarDashboardPage() {
   const { user } = useAuthStore();
   const [athletes, setAthletes] = useState<Athlete[]>([]);
+  const [requirementsBySport, setRequirementsBySport] = useState<Record<string, DocRequirement[]>>({});
   const [expandedSport, setExpandedSport] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -62,6 +60,20 @@ export default function RegistrarDashboardPage() {
     setAthletes(
       (profiles ?? []).map((p) => ({ ...p, uploadedDocTypes: docsByAthlete[p.id] ?? [] }))
     );
+
+    const sports = Array.from(new Set((profiles ?? []).map((p) => p.sport).filter(Boolean))) as string[];
+    if (sports.length > 0) {
+      const { data: reqs } = await supabase
+        .from('sport_document_requirements')
+        .select('sport, doc_type, label, sort_order')
+        .in('sport', sports)
+        .order('sort_order');
+      const bySport: Record<string, DocRequirement[]> = {};
+      (reqs ?? []).forEach((r) => {
+        bySport[r.sport] = [...(bySport[r.sport] ?? []), { doc_type: r.doc_type, label: r.label }];
+      });
+      setRequirementsBySport(bySport);
+    }
   };
 
   useEffect(() => {
@@ -263,11 +275,11 @@ export default function RegistrarDashboardPage() {
                           </p>
                           <p className="text-xs text-neutral-500 mb-3">
                             Submitted Documents:{' '}
-                            {REQUIRED_DOCS.map((d) => (
+                            {(requirementsBySport[a.sport ?? ''] ?? []).map((d) => (
                               <span
-                                key={d.type}
+                                key={d.doc_type}
                                 className={`inline-block mr-2 ${
-                                  a.uploadedDocTypes.includes(d.type) ? 'text-green-600' : 'text-neutral-300'
+                                  a.uploadedDocTypes.includes(d.doc_type) ? 'text-green-600' : 'text-neutral-300'
                                 }`}
                               >
                                 ✓ {d.label}
@@ -277,17 +289,17 @@ export default function RegistrarDashboardPage() {
 
                           {expandedAthlete === a.id && (
                             <div className="rounded-lg bg-neutral-50 border border-neutral-100 p-3 mb-3 space-y-1.5">
-                              {REQUIRED_DOCS.map((d) => {
-                                const uploaded = a.uploadedDocTypes.includes(d.type);
+                              {(requirementsBySport[a.sport ?? ''] ?? []).map((d) => {
+                                const uploaded = a.uploadedDocTypes.includes(d.doc_type);
                                 return (
-                                  <div key={d.type} className="flex items-center justify-between text-xs">
+                                  <div key={d.doc_type} className="flex items-center justify-between text-xs">
                                     <span className={uploaded ? 'text-neutral-700' : 'text-neutral-400'}>
                                       {uploaded ? '✓' : '○'} {d.label}
                                     </span>
                                     {uploaded ? (
                                       <button
                                         type="button"
-                                        onClick={() => handleViewDocument(a.id, d.type)}
+                                        onClick={() => handleViewDocument(a.id, d.doc_type)}
                                         className="text-orange-600 hover:text-orange-700 font-medium underline"
                                       >
                                         View

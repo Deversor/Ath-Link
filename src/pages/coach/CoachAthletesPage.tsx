@@ -1,27 +1,14 @@
 import { useEffect, useState } from 'react';
-import { FileText, Users, CheckCircle2, Send, Edit3 } from 'lucide-react';
+import { FileText, Users, CheckCircle2, Send, Plus, Trash2 } from 'lucide-react';
 import CoachPortalLayout from '../../components/layout/CoachPortalLayout';
 import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
 import { getCurrentAcademicTerm, slugifyTerm } from '../../lib/academicTerm';
+import { slugifyDocType } from '../../lib/docType';
+import { useSportDocumentRequirements } from '../../hooks/useSportDocumentRequirements';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
-const REQUIRED_DOCS = [
-  'Medical Clearance Certificate',
-  'Latest Academic Record / Grade Sheet',
-  'Parental Consent Form (for minors)',
-  'Sports Eligibility Form',
-  'ID Photo (2x2)',
-];
-
-const DOC_TYPES = [
-  { type: 'medical_clearance', label: 'Medical Clearance Certificate' },
-  { type: 'academic_record', label: 'Academic Record / Grade Sheet' },
-  { type: 'parental_consent', label: 'Parental Consent Form' },
-  { type: 'eligibility_form', label: 'Sports Eligibility Form' },
-  { type: 'id_photo', label: 'ID Photo (2x2)' },
-];
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 
 interface Athlete {
   id: string;
@@ -35,14 +22,17 @@ interface Athlete {
 }
 
 export default function CoachAthletesPage() {
-  const { profile } = useAuthStore();
+  const { profile, user } = useAuthStore();
   const sport = profile?.sport ?? '';
+  const { requirements, reload: reloadRequirements } = useSportDocumentRequirements(sport);
 
   const [view, setView] = useState<'documents' | 'roster'>('documents');
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [deadline, setDeadline] = useState('2026-05-15');
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [expandedAthlete, setExpandedAthlete] = useState<string | null>(null);
+  const [newRequirementLabel, setNewRequirementLabel] = useState('');
+  const [removeTarget, setRemoveTarget] = useState<{ id: string; label: string } | null>(null);
 
   const loadAthletes = async () => {
     if (!sport) return;
@@ -94,13 +84,55 @@ export default function CoachAthletesPage() {
     window.open(data.signedUrl, '_blank');
   };
 
+  const handleAddRequirement = async () => {
+    const label = newRequirementLabel.trim();
+    if (!label || !sport) return;
+    const docType = slugifyDocType(label);
+    const { error } = await supabase.from('sport_document_requirements').insert({
+      sport,
+      doc_type: docType,
+      label,
+      sort_order: requirements.length + 1,
+      created_by: user?.id,
+    });
+    if (error) {
+      setActionMessage(
+        error.message.includes('duplicate') ? 'A requirement with that name already exists.' : error.message
+      );
+      return;
+    }
+    setNewRequirementLabel('');
+    reloadRequirements();
+    loadAthletes();
+  };
+
+  const handleRemoveRequirement = async (id: string) => {
+    await supabase.from('sport_document_requirements').delete().eq('id', id);
+    setRemoveTarget(null);
+    reloadRequirements();
+    loadAthletes();
+  };
+
+  const handleNotifyTeam = async () => {
+    const ids = athletes.map((a) => a.id);
+    if (ids.length === 0 || !user) return;
+    await supabase.from('notifications').insert(
+      ids.map((id) => ({
+        user_id: id,
+        message: `Document requirements for ${sport} were updated by your coach. Check the Documents page for the current list.`,
+        sent_by: user.id,
+      }))
+    );
+    setActionMessage('Team notified of the current requirements.');
+  };
+
   useEffect(() => {
     loadAthletes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sport]);
 
   const totalSubmissions = athletes.filter((a) => a.uploadedCount > 0).length;
-  const approvedCount = athletes.filter((a) => a.uploadedCount >= 5).length;
+  const approvedCount = athletes.filter((a) => a.uploadedCount >= requirements.length && requirements.length > 0).length;
   const compiledAthletes = athletes.filter((a) => a.document_compile_status === 'compiled');
 
   const handleCompile = async (athleteId: string) => {
@@ -154,7 +186,10 @@ export default function CoachAthletesPage() {
           {/* Requirements */}
           <div className="bg-white border border-neutral-200 rounded-xl p-6">
             <h2 className="font-semibold text-neutral-900 mb-1">Document Submission Requirements</h2>
-            <p className="text-sm text-neutral-500 mb-4">Define what documents your athletes must submit</p>
+            <p className="text-sm text-neutral-500 mb-4">
+              Define what documents your {sport} athletes must submit this term. Changes apply immediately — your
+              athletes will see the updated list right away.
+            </p>
 
             <label className="block text-sm font-medium text-neutral-800 mb-1.5">Submission Deadline</label>
             <Input
@@ -165,32 +200,45 @@ export default function CoachAthletesPage() {
             />
 
             <div className="rounded-lg bg-neutral-50 border border-neutral-100 p-4 mb-4">
-              <p className="text-sm font-medium text-neutral-800 mb-1.5">Current Requirements:</p>
-              <ul className="list-disc list-inside text-sm text-neutral-600 space-y-0.5">
-                {REQUIRED_DOCS.map((d) => (
-                  <li key={d}>{d}</li>
-                ))}
-              </ul>
+              <p className="text-sm font-medium text-neutral-800 mb-2">Current Requirements:</p>
+              {requirements.length === 0 ? (
+                <p className="text-sm text-neutral-400">No requirements set yet — add one below.</p>
+              ) : (
+                <ul className="space-y-1.5">
+                  {requirements.map((r) => (
+                    <li key={r.id} className="flex items-center justify-between text-sm text-neutral-700">
+                      <span>{r.label}</span>
+                      <button
+                        type="button"
+                        onClick={() => setRemoveTarget({ id: r.id, label: r.label })}
+                        className="text-neutral-400 hover:text-red-600"
+                        aria-label={`Remove ${r.label}`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <div className="flex gap-2 mt-3 pt-3 border-t border-neutral-200">
+                <Input
+                  placeholder="e.g., Liability Waiver Form"
+                  value={newRequirementLabel}
+                  onChange={(e) => setNewRequirementLabel(e.target.value)}
+                  className="h-9"
+                />
+                <Button type="button" className="h-9 bg-orange-500 hover:bg-orange-600 shrink-0" onClick={handleAddRequirement}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add
+                </Button>
+              </div>
             </div>
 
-            <div className="flex gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setActionMessage('Requirement editing is coming in a future update.')}
-              >
-                <Edit3 className="w-4 h-4 mr-2" />
-                Edit Requirements
-              </Button>
-              <Button
-                type="button"
-                className="flex-1 bg-orange-500 hover:bg-orange-600"
-                onClick={() => setActionMessage('Requirements published and team notified.')}
-              >
-                <Send className="w-4 h-4 mr-2" />
-                Publish & Notify Team
-              </Button>
-            </div>
+            <Button type="button" className="w-full bg-orange-500 hover:bg-orange-600" onClick={handleNotifyTeam}>
+              <Send className="w-4 h-4 mr-2" />
+              Notify Team of Current Requirements
+            </Button>
           </div>
 
           {/* Athlete submissions */}
@@ -228,7 +276,7 @@ export default function CoachAthletesPage() {
                         <p className="text-xs text-neutral-500">{a.email}</p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-xs text-neutral-500">{a.uploadedCount}/5 uploaded</span>
+                        <span className="text-xs text-neutral-500">{a.uploadedCount}/{requirements.length} uploaded</span>
                         <Button
                           type="button"
                           variant="outline"
@@ -239,7 +287,7 @@ export default function CoachAthletesPage() {
                         </Button>
                         <Button
                           type="button"
-                          disabled={a.uploadedCount < 5 || a.document_compile_status !== 'not_ready'}
+                          disabled={a.uploadedCount < requirements.length || requirements.length === 0 || a.document_compile_status !== 'not_ready'}
                           onClick={() => handleCompile(a.id)}
                           className="bg-green-600 hover:bg-green-700 disabled:bg-neutral-200 text-xs h-8"
                         >
@@ -254,17 +302,17 @@ export default function CoachAthletesPage() {
 
                     {expandedAthlete === a.id && (
                       <div className="mt-3 pt-3 border-t border-neutral-200 space-y-1.5">
-                        {DOC_TYPES.map((d) => {
-                          const uploaded = a.uploadedDocTypes.includes(d.type);
+                        {requirements.map((d) => {
+                          const uploaded = a.uploadedDocTypes.includes(d.doc_type);
                           return (
-                            <div key={d.type} className="flex items-center justify-between text-xs">
+                            <div key={d.doc_type} className="flex items-center justify-between text-xs">
                               <span className={uploaded ? 'text-neutral-700' : 'text-neutral-400'}>
                                 {uploaded ? '✓' : '○'} {d.label}
                               </span>
                               {uploaded ? (
                                 <button
                                   type="button"
-                                  onClick={() => handleViewDocument(a.id, d.type)}
+                                  onClick={() => handleViewDocument(a.id, d.doc_type)}
                                   className="text-orange-600 hover:text-orange-700 font-medium underline"
                                 >
                                   View
@@ -381,6 +429,17 @@ export default function CoachAthletesPage() {
             </div>
           )}
         </div>
+      )}
+
+      {removeTarget && (
+        <ConfirmDialog
+          title="Remove this requirement?"
+          description={`"${removeTarget.label}" will no longer be required for ${sport}. Athletes who already uploaded it will keep their file on record, but it won't count toward their submission checklist anymore.`}
+          confirmLabel="Remove"
+          variant="danger"
+          onConfirm={() => handleRemoveRequirement(removeTarget.id)}
+          onClose={() => setRemoveTarget(null)}
+        />
       )}
     </CoachPortalLayout>
   );

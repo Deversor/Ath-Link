@@ -2,15 +2,8 @@ import { useEffect, useState } from 'react';
 import { Archive, Search, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { slugifyTerm } from '../../lib/academicTerm';
+import { useSportDocumentRequirements } from '../../hooks/useSportDocumentRequirements';
 import { Input } from '@/components/ui/input';
-
-const DOC_TYPES = [
-  { type: 'medical_clearance', label: 'Medical Clearance Certificate' },
-  { type: 'academic_record', label: 'Academic Record / Grade Sheet' },
-  { type: 'parental_consent', label: 'Parental Consent Form' },
-  { type: 'eligibility_form', label: 'Sports Eligibility Form' },
-  { type: 'id_photo', label: 'ID Photo (2x2)' },
-];
 
 interface Athlete {
   id: string;
@@ -27,6 +20,7 @@ export function DocumentArchiveContent() {
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
   const [uploadedTypes, setUploadedTypes] = useState<string[]>([]);
   const [message, setMessage] = useState<string | null>(null);
+  const { requirements } = useSportDocumentRequirements(selectedAthlete?.sport);
 
   useEffect(() => {
     async function loadTerms() {
@@ -177,28 +171,36 @@ export function DocumentArchiveContent() {
             </div>
 
             <div className="space-y-1.5">
-              {DOC_TYPES.map((d) => {
-                const uploaded = uploadedTypes.includes(d.type);
-                return (
-                  <div key={d.type} className="flex items-center justify-between text-sm py-1">
-                    <span className={`flex items-center gap-1.5 ${uploaded ? 'text-neutral-700' : 'text-neutral-400'}`}>
-                      <FileText className="w-3.5 h-3.5" />
-                      {d.label}
-                    </span>
-                    {uploaded ? (
-                      <button
-                        type="button"
-                        onClick={() => handleViewDocument(d.type)}
-                        className="text-orange-600 hover:text-orange-700 font-medium underline text-xs"
-                      >
-                        View
-                      </button>
-                    ) : (
-                      <span className="text-xs text-neutral-300">Not on file for this term</span>
-                    )}
-                  </div>
-                );
-              })}
+              {requirements.length === 0 ? (
+                <p className="text-sm text-neutral-400">No requirements on file for this sport.</p>
+              ) : (
+                requirements.map((d) => {
+                  const uploaded = uploadedTypes.includes(d.doc_type);
+                  return (
+                    <div key={d.doc_type} className="flex items-center justify-between text-sm py-1">
+                      <span className={`flex items-center gap-1.5 ${uploaded ? 'text-neutral-700' : 'text-neutral-400'}`}>
+                        <FileText className="w-3.5 h-3.5" />
+                        {d.label}
+                      </span>
+                      {uploaded ? (
+                        <button
+                          type="button"
+                          onClick={() => handleViewDocument(d.doc_type)}
+                          className="text-orange-600 hover:text-orange-700 font-medium underline text-xs"
+                        >
+                          View
+                        </button>
+                      ) : (
+                        <span className="text-xs text-neutral-300">Not on file for this term</span>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+              <p className="text-xs text-neutral-400 pt-2 border-t border-neutral-100 mt-2">
+                Showing this sport's current requirement list — if requirements changed since this term, older
+                document types no longer required may not appear here even if still on file.
+              </p>
             </div>
           </div>
         )}

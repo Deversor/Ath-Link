@@ -1,30 +1,14 @@
 import { useEffect, useState } from 'react';
-import {
-  FileText,
-  Clock,
-  CheckCircle2,
-  Activity,
-  GraduationCap,
-  Trophy,
-  User as UserIcon,
-  Upload,
-} from 'lucide-react';
+import { FileText, Clock, CheckCircle2, Upload } from 'lucide-react';
 import PortalLayout from '../../components/layout/PortalLayout';
 import PortalHero from '../../components/layout/PortalHero';
 import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
 import { getCurrentAcademicTerm, slugifyTerm } from '../../lib/academicTerm';
+import { useSportDocumentRequirements } from '../../hooks/useSportDocumentRequirements';
 import { Button } from '@/components/ui/button';
 
 const DEADLINE = new Date('2026-05-15');
-
-const REQUIRED_DOCS = [
-  { type: 'medical_clearance', label: 'Medical Clearance Certificate', icon: Activity },
-  { type: 'academic_record', label: 'Academic Record / Grade Sheet', icon: GraduationCap },
-  { type: 'parental_consent', label: 'Parental Consent Form', icon: FileText },
-  { type: 'eligibility_form', label: 'Sports Eligibility Form', icon: Trophy },
-  { type: 'id_photo', label: 'ID Photo (2x2)', icon: UserIcon },
-] as const;
 
 interface DocRow {
   doc_type: string;
@@ -33,6 +17,7 @@ interface DocRow {
 
 export default function DocumentsPage() {
   const { user, profile } = useAuthStore();
+  const { requirements } = useSportDocumentRequirements(profile?.sport);
   const [docs, setDocs] = useState<DocRow[]>([]);
   const [academicTerm, setAcademicTerm] = useState<string | null>(null);
   const [uploadingType, setUploadingType] = useState<string | null>(null);
@@ -57,7 +42,8 @@ export default function DocumentsPage() {
   }, [user]);
 
   const isUploaded = (type: string) => docs.some((d) => d.doc_type === type && d.status !== 'missing');
-  const uploadedCount = REQUIRED_DOCS.filter((d) => isUploaded(d.type)).length;
+  const uploadedCount = requirements.filter((d) => isUploaded(d.doc_type)).length;
+  const totalRequired = requirements.length;
 
   const daysRemaining = Math.max(
     0,
@@ -123,7 +109,8 @@ export default function DocumentsPage() {
           <h2 className="font-semibold text-neutral-900">Required Documents</h2>
         </div>
         <p className="text-sm text-neutral-500 mb-4">
-          Upload the documents required by your coach. All files must be in PDF format.
+          Upload the documents required by your coach for {profile?.sport ?? 'your sport'} this term. All files must
+          be in PDF format.
         </p>
 
         <div className="flex items-center gap-3 rounded-lg bg-orange-50 border border-orange-100 px-4 py-3 mb-4">
@@ -143,11 +130,15 @@ export default function DocumentsPage() {
             <CheckCircle2 className="w-4 h-4" />
             Coach Requirements:
           </p>
-          <ul className="list-disc list-inside text-sm text-blue-700 space-y-0.5">
-            {REQUIRED_DOCS.map((d) => (
-              <li key={d.type}>{d.label}</li>
-            ))}
-          </ul>
+          {requirements.length === 0 ? (
+            <p className="text-sm text-blue-700">Your coach hasn't set any requirements yet.</p>
+          ) : (
+            <ul className="list-disc list-inside text-sm text-blue-700 space-y-0.5">
+              {requirements.map((d) => (
+                <li key={d.doc_type}>{d.label}</li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <h3 className="text-sm font-semibold text-neutral-800 mb-2 flex items-center gap-1.5">
@@ -156,15 +147,15 @@ export default function DocumentsPage() {
         </h3>
 
         <div className="space-y-2 mb-4">
-          {REQUIRED_DOCS.map(({ type, label, icon: Icon }) => {
-            const uploaded = isUploaded(type);
+          {requirements.map(({ doc_type, label }) => {
+            const uploaded = isUploaded(doc_type);
             return (
               <div
-                key={type}
+                key={doc_type}
                 className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-neutral-100 bg-neutral-50"
               >
                 <span className="flex items-center gap-2 text-sm text-neutral-700">
-                  <Icon className="w-4 h-4 text-neutral-400" />
+                  <FileText className="w-4 h-4 text-neutral-400" />
                   {label} *
                 </span>
 
@@ -173,7 +164,7 @@ export default function DocumentsPage() {
                     type="file"
                     accept="application/pdf"
                     className="hidden"
-                    onChange={(e) => handleUpload(type, e.target.files?.[0])}
+                    onChange={(e) => handleUpload(doc_type, e.target.files?.[0])}
                   />
                   <span
                     className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${
@@ -182,7 +173,7 @@ export default function DocumentsPage() {
                         : 'bg-orange-500 text-white hover:bg-orange-600'
                     }`}
                   >
-                    {uploadingType === type ? (
+                    {uploadingType === doc_type ? (
                       'Uploading…'
                     ) : uploaded ? (
                       <>
@@ -210,9 +201,9 @@ export default function DocumentsPage() {
           </p>
         )}
 
-        {uploadedCount < 5 && (
+        {uploadedCount < totalRequired && (
           <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-4">
-            All 5 required documents must be uploaded before submitting.
+            All {totalRequired} required document{totalRequired === 1 ? '' : 's'} must be uploaded before submitting.
           </p>
         )}
 
@@ -224,7 +215,7 @@ export default function DocumentsPage() {
 
         <Button
           type="button"
-          disabled={uploadedCount < 5}
+          disabled={uploadedCount < totalRequired || totalRequired === 0}
           onClick={handleSubmit}
           className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-200"
         >
@@ -241,11 +232,11 @@ export default function DocumentsPage() {
             <FileText className="w-4 h-4 text-blue-600" />
             <div>
               <p className="text-sm font-medium text-blue-800">Documents Ready</p>
-              <p className="text-xs text-blue-700">{uploadedCount} of 5 required documents uploaded</p>
+              <p className="text-xs text-blue-700">{uploadedCount} of {totalRequired} required documents uploaded</p>
             </div>
           </div>
           <span className="text-xs font-semibold border border-blue-200 text-blue-700 rounded-full px-2 py-0.5">
-            {uploadedCount}/5
+            {uploadedCount}/{totalRequired}
           </span>
         </div>
       </div>
