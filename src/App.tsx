@@ -12,6 +12,8 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import CheckEmailPage from './pages/CheckEmailPage';
 import CompleteAdminSignUpPage from './pages/CompleteAdminSignUpPage';
 import StaffAdminDocumentArchivePage from './pages/staff-admin/StaffAdminDocumentArchivePage';
+import StaffAdminProfileSettingsPage from './pages/staff-admin/StaffAdminProfileSettingsPage';
+import FacilityRequesterProfileSettingsPage from './pages/FacilityRequesterProfileSettingsPage';
 import SuperAdminDocumentArchivePage from './pages/super-admin/SuperAdminDocumentArchivePage';
 import CompleteFacilityRequesterSignUpPage from './pages/CompleteFacilityRequesterSignUpPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
@@ -73,6 +75,14 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/facility-reservation" element={<PublicFacilityBookingPage />} />
         <Route path="/facility-reservation/reserve" element={<FacilityReservationFormPage />} />
+        <Route
+          path="/facility-reservation/profile-settings"
+          element={
+            <RequireAuth>
+              <FacilityRequesterProfileSettingsPage />
+            </RequireAuth>
+          }
+        />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/profile-setup" element={<ProfileSetupPage />} />
         <Route path="/coach-profile-setup" element={<CoachProfileSetupPage />} />
@@ -229,7 +239,14 @@ function App() {
             </RequireAuth>
           }
         />
-        {/* TODO Phase 3: /staff-admin/profile-settings */}
+        <Route
+          path="/staff-admin/profile-settings"
+          element={
+            <RequireAuth role="staff_admin">
+              <StaffAdminProfileSettingsPage />
+            </RequireAuth>
+          }
+        />
 
         {/* ── Super Admin portal ── */}
         <Route

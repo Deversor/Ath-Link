@@ -8,8 +8,6 @@ import { getCurrentAcademicTerm, slugifyTerm } from '../../lib/academicTerm';
 import { useSportDocumentRequirements } from '../../hooks/useSportDocumentRequirements';
 import { Button } from '@/components/ui/button';
 
-const DEADLINE = new Date('2026-05-15');
-
 interface DocRow {
   doc_type: string;
   status: string;
@@ -20,6 +18,7 @@ export default function DocumentsPage() {
   const { requirements } = useSportDocumentRequirements(profile?.sport);
   const [docs, setDocs] = useState<DocRow[]>([]);
   const [academicTerm, setAcademicTerm] = useState<string | null>(null);
+  const [deadline, setDeadline] = useState<Date | null>(null);
   const [uploadingType, setUploadingType] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
@@ -41,14 +40,26 @@ export default function DocumentsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  useEffect(() => {
+    async function loadDeadline() {
+      if (!profile?.sport) return;
+      const { data } = await supabase
+        .from('sport_deadlines')
+        .select('deadline')
+        .eq('sport', profile.sport)
+        .maybeSingle();
+      setDeadline(data ? new Date(data.deadline) : null);
+    }
+    loadDeadline();
+  }, [profile?.sport]);
+
   const isUploaded = (type: string) => docs.some((d) => d.doc_type === type && d.status !== 'missing');
   const uploadedCount = requirements.filter((d) => isUploaded(d.doc_type)).length;
   const totalRequired = requirements.length;
 
-  const daysRemaining = Math.max(
-    0,
-    Math.ceil((DEADLINE.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-  );
+  const daysRemaining = deadline
+    ? Math.max(0, Math.ceil((deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
 
   const handleUpload = async (docType: string, file: File | undefined) => {
     if (!file || !user) return;
@@ -93,10 +104,35 @@ export default function DocumentsPage() {
     setUploadingType(null);
   };
 
-  const handleSubmit = () => {
-    // No coach-review workflow is built yet — this just confirms locally
-    // that everything required has been uploaded.
-    setSubmitMessage('Documents submitted for coach review!');
+  const [hasNotifiedCoach, setHasNotifiedCoach] = useState(!!profile?.documents_submitted_at);
+
+  const handleSubmit = async () => {
+    if (!user || !profile?.sport) return;
+
+    // This is the real, hard gate: the Coach cannot compile this athlete's
+    // documents until this timestamp is set.
+    await supabase.from('profiles').update({ documents_submitted_at: new Date().toISOString() }).eq('id', user.id);
+    await useAuthStore.getState().fetchProfile();
+
+    // Also let the coach know right away, rather than making them notice on their own.
+    const { data: coach } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('role', 'coach')
+      .eq('sport', profile.sport)
+      .maybeSingle();
+
+    if (coach) {
+      await supabase.from('notifications').insert({
+        user_id: coach.id,
+        message: `${profile.full_name} has submitted all required documents for ${profile.sport} and is ready for compilation.`,
+        sent_by: user.id,
+      });
+      setSubmitMessage('Documents submitted! Your coach has been notified and can now compile them.');
+    } else {
+      setSubmitMessage('Documents submitted — no coach is assigned to your sport yet to notify.');
+    }
+    setHasNotifiedCoach(true);
   };
 
   return (
@@ -116,12 +152,20 @@ export default function DocumentsPage() {
         <div className="flex items-center gap-3 rounded-lg bg-orange-50 border border-orange-100 px-4 py-3 mb-4">
           <Clock className="w-8 h-8 text-orange-500 shrink-0" />
           <div>
-            <p className="text-sm font-medium text-orange-800">
-              Submission Deadline: {DEADLINE.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
-            </p>
-            <p className="text-xs text-orange-700">
-              {daysRemaining} days remaining · Don't miss the deadline!
-            </p>
+            {deadline ? (
+              <>
+                <p className="text-sm font-medium text-orange-800">
+                  Submission Deadline: {deadline.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                </p>
+                <p className="text-xs text-orange-700">
+                  {daysRemaining} day{daysRemaining === 1 ? '' : 's'} remaining · Don't miss the deadline!
+                </p>
+              </>
+            ) : (
+              <p className="text-sm font-medium text-orange-800">
+                Your coach hasn't set a submission deadline yet.
+              </p>
+            )}
           </div>
         </div>
 
@@ -215,12 +259,12 @@ export default function DocumentsPage() {
 
         <Button
           type="button"
-          disabled={uploadedCount < totalRequired || totalRequired === 0}
+          disabled={uploadedCount < totalRequired || totalRequired === 0 || hasNotifiedCoach}
           onClick={handleSubmit}
           className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-200"
         >
           <Upload className="w-4 h-4 mr-2" />
-          Submit
+          {hasNotifiedCoach ? 'Documents Submitted' : 'Submit'}
         </Button>
       </div>
 

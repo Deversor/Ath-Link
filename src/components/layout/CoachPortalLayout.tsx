@@ -7,7 +7,7 @@ const NAV_ITEMS = [
   { to: '/coach/dashboard', label: 'Dashboard', icon: FileText },
   { to: '/coach/athletes', label: 'Athletes', icon: Users },
   { to: '/coach/schedules', label: 'Schedules', icon: Calendar },
-  { to: '/facility-reservation', label: 'Facility Reservation', icon: Building2 },
+  { to: '/facility-reservation', label: 'Facility Reservation', mobileLabel: 'Facility', icon: Building2 },
   { to: '/coach/reports', label: 'Reports', icon: FileText },
 ];
 
@@ -29,6 +29,7 @@ export default function CoachPortalLayout({ children }: { children: ReactNode })
       }
       navItems={NAV_ITEMS}
       profilePath="/coach/profile-settings"
+      mobileNavStyle="bottom-bar"
     >
       {children}
     </AppShellLayout>

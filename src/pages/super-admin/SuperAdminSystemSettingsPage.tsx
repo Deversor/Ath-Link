@@ -26,6 +26,14 @@ export default function SuperAdminSystemSettingsPage() {
       .update({ document_compile_status: 'not_ready', revision_note: null })
       .eq('role', 'student')
       .neq('document_compile_status', 'not_ready');
+    // Reset unconditionally for every student — a student who submitted but
+    // whose coach hadn't compiled yet would still show document_compile_status
+    // as 'not_ready' and get missed by the filter above otherwise.
+    await supabase
+      .from('profiles')
+      .update({ documents_submitted_at: null })
+      .eq('role', 'student')
+      .not('documents_submitted_at', 'is', null);
     setIsRollingOver(false);
     setShowRolloverConfirm(false);
     setMessage(

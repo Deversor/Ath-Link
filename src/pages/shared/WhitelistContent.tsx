@@ -95,7 +95,7 @@ export function WhitelistContent() {
 
         <div className="flex flex-col sm:flex-row gap-2 mb-4">
           <Input
-            placeholder="athlete@psu.edu"
+            placeholder="athlete@psu.palawan.edu.ph"
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
             className="flex-1"
@@ -128,7 +128,7 @@ export function WhitelistContent() {
               rows={5}
               value={bulkText}
               onChange={(e) => setBulkText(e.target.value)}
-              placeholder={'athlete1@psu.edu\nathlete2@psu.edu\nathlete3@psu.edu'}
+              placeholder={'athlete1@psu.palawan.edu.ph\nathlete2@psu.palawan.edu.ph\nathlete3@psu.palawan.edu.ph'}
               className="w-full px-3 py-2.5 rounded-lg bg-neutral-100 border border-transparent focus:border-orange-500 focus:bg-white outline-none text-sm transition-colors resize-none mb-3"
             />
             <Button

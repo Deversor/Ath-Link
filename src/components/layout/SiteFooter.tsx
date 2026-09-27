@@ -38,7 +38,7 @@ export default function SiteFooter() {
         <div>
           <p className="font-semibold text-white mb-2">Contact</p>
           <ul className="space-y-1 text-neutral-400">
-            <li>Email: sports@psu.edu</li>
+            <li>Email: sports@psu.palawan.edu.ph</li>
             <li>Phone: (555) 123-4567</li>
             <li>Office Hours: Mon–Fri 8AM–5PM</li>
           </ul>

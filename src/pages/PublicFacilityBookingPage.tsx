@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Building2, Trophy, Search, ChevronLeft, ChevronRight, LogIn, LogOut } from 'lucide-react';
+import { Building2, Trophy, Search, ChevronLeft, ChevronRight, LogIn, LogOut, User as UserIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuthStore';
 import NotificationsBell from '../components/layout/NotificationsBell';
@@ -205,6 +205,16 @@ export default function PublicFacilityBookingPage() {
                   {profile.full_name} {profile.department ? `· ${profile.department}` : ''}
                 </span>
                 <NotificationsBell />
+                {profile.role === 'facility_requester' && (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/facility-reservation/profile-settings')}
+                    aria-label="Profile Settings"
+                    className="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center"
+                  >
+                    <UserIcon className="w-4 h-4" />
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={async () => {

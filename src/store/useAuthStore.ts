@@ -28,6 +28,7 @@ export interface Profile {
   position: string | null;
   is_active: boolean;
   terms_accepted_at: string | null;
+  documents_submitted_at: string | null;
 }
 
 interface AuthState {

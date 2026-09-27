@@ -347,7 +347,7 @@ function AddUserModal({
             <option value="admin">Admin (Staff Admin / Registrar / Super Admin)</option>
           </select>
 
-          <Input placeholder="email@psu.edu" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input placeholder="email@psu.palawan.edu.ph" value={email} onChange={(e) => setEmail(e.target.value)} />
 
           {kind === 'coach' && (
             <select

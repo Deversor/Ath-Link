@@ -152,7 +152,7 @@ export function CoachManagementContent() {
               ) : (
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Input
-                    placeholder="coach.email@psu.edu"
+                    placeholder="coach.email@psu.palawan.edu.ph"
                     value={inviteEmails[sport] ?? ''}
                     onChange={(e) => setInviteEmails((prev) => ({ ...prev, [sport]: e.target.value }))}
                     className="flex-1"

@@ -118,7 +118,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@psu.edu"
+                  placeholder="you@psu.palawan.edu.ph"
                   autoComplete="email"
                   className="pl-10"
                   {...register('email')}

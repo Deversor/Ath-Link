@@ -67,6 +67,7 @@ export default function RegistrarDashboardPage() {
         .from('sport_document_requirements')
         .select('sport, doc_type, label, sort_order')
         .in('sport', sports)
+        .eq('active', true)
         .order('sort_order');
       const bySport: Record<string, DocRequirement[]> = {};
       (reqs ?? []).forEach((r) => {
@@ -151,7 +152,7 @@ export default function RegistrarDashboardPage() {
     if (!revisionTarget) return;
     await supabase
       .from('profiles')
-      .update({ document_compile_status: 'not_ready', revision_note: reason })
+      .update({ document_compile_status: 'not_ready', revision_note: reason, documents_submitted_at: null })
       .eq('id', revisionTarget.id);
 
     // Notify the coach who handles this sport — they're the one who needs

@@ -23,6 +23,7 @@ export function useSportDocumentRequirements(sport: string | null | undefined) {
       .from('sport_document_requirements')
       .select('id, doc_type, label, sort_order')
       .eq('sport', sport)
+      .eq('active', true)
       .order('sort_order');
     setRequirements(data ?? []);
     setLoading(false);

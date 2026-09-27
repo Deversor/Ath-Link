@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Archive, Search, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { slugifyTerm } from '../../lib/academicTerm';
-import { useSportDocumentRequirements } from '../../hooks/useSportDocumentRequirements';
 import { Input } from '@/components/ui/input';
 
 interface Athlete {
@@ -10,6 +9,11 @@ interface Athlete {
   full_name: string;
   student_id: string | null;
   sport: string | null;
+}
+
+interface DocRequirement {
+  doc_type: string;
+  label: string;
 }
 
 export function DocumentArchiveContent() {
@@ -20,7 +24,25 @@ export function DocumentArchiveContent() {
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
   const [uploadedTypes, setUploadedTypes] = useState<string[]>([]);
   const [message, setMessage] = useState<string | null>(null);
-  const { requirements } = useSportDocumentRequirements(selectedAthlete?.sport);
+  const [requirements, setRequirements] = useState<DocRequirement[]>([]);
+
+  // Deliberately does NOT filter by active=true — a requirement a coach
+  // later removed still needs its label shown here for historical accuracy.
+  useEffect(() => {
+    async function loadAllRequirements() {
+      if (!selectedAthlete?.sport) {
+        setRequirements([]);
+        return;
+      }
+      const { data } = await supabase
+        .from('sport_document_requirements')
+        .select('doc_type, label')
+        .eq('sport', selectedAthlete.sport)
+        .order('sort_order');
+      setRequirements(data ?? []);
+    }
+    loadAllRequirements();
+  }, [selectedAthlete?.sport]);
 
   useEffect(() => {
     async function loadTerms() {
@@ -198,8 +220,8 @@ export function DocumentArchiveContent() {
                 })
               )}
               <p className="text-xs text-neutral-400 pt-2 border-t border-neutral-100 mt-2">
-                Showing this sport's current requirement list — if requirements changed since this term, older
-                document types no longer required may not appear here even if still on file.
+                Shows every requirement ever defined for this sport, including ones since removed — so labels stay
+                accurate even for documents tied to a requirement that no longer applies today.
               </p>
             </div>
           </div>

@@ -17,6 +17,7 @@ interface Athlete {
   position: string | null;
   document_compile_status: string;
   revision_note: string | null;
+  documents_submitted_at: string | null;
   uploadedCount: number;
   uploadedDocTypes: string[];
 }
@@ -28,18 +29,37 @@ export default function CoachAthletesPage() {
 
   const [view, setView] = useState<'documents' | 'roster'>('documents');
   const [athletes, setAthletes] = useState<Athlete[]>([]);
-  const [deadline, setDeadline] = useState('2026-05-15');
+  const [deadline, setDeadline] = useState('');
+  const [deadlineSaved, setDeadlineSaved] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [expandedAthlete, setExpandedAthlete] = useState<string | null>(null);
   const [newRequirementLabel, setNewRequirementLabel] = useState('');
   const [removeTarget, setRemoveTarget] = useState<{ id: string; label: string } | null>(null);
+
+  const loadDeadline = async () => {
+    if (!sport) return;
+    const { data } = await supabase.from('sport_deadlines').select('deadline').eq('sport', sport).maybeSingle();
+    if (data) setDeadline(data.deadline);
+  };
+
+  const handleSaveDeadline = async () => {
+    if (!sport || !deadline || !user) return;
+    await supabase.from('sport_deadlines').upsert({
+      sport,
+      deadline,
+      updated_by: user.id,
+      updated_at: new Date().toISOString(),
+    });
+    setDeadlineSaved(true);
+    setTimeout(() => setDeadlineSaved(false), 2000);
+  };
 
   const loadAthletes = async () => {
     if (!sport) return;
 
     const { data: roster } = await supabase
       .from('profiles')
-      .select('id, full_name, email, position, document_compile_status, revision_note')
+      .select('id, full_name, email, position, document_compile_status, revision_note, documents_submitted_at')
       .eq('role', 'student')
       .eq('sport', sport);
 
@@ -88,17 +108,32 @@ export default function CoachAthletesPage() {
     const label = newRequirementLabel.trim();
     if (!label || !sport) return;
     const docType = slugifyDocType(label);
-    const { error } = await supabase.from('sport_document_requirements').insert({
-      sport,
-      doc_type: docType,
-      label,
-      sort_order: requirements.length + 1,
-      created_by: user?.id,
-    });
+
+    // If this exact requirement existed before and was removed, reactivate
+    // it (with the new label) instead of trying to insert a duplicate —
+    // its doc_type is still tied to real uploaded files in storage.
+    const { data: existing } = await supabase
+      .from('sport_document_requirements')
+      .select('id')
+      .eq('sport', sport)
+      .eq('doc_type', docType)
+      .maybeSingle();
+
+    const { error } = existing
+      ? await supabase
+          .from('sport_document_requirements')
+          .update({ label, active: true, sort_order: requirements.length + 1 })
+          .eq('id', existing.id)
+      : await supabase.from('sport_document_requirements').insert({
+          sport,
+          doc_type: docType,
+          label,
+          sort_order: requirements.length + 1,
+          created_by: user?.id,
+        });
+
     if (error) {
-      setActionMessage(
-        error.message.includes('duplicate') ? 'A requirement with that name already exists.' : error.message
-      );
+      setActionMessage(error.message);
       return;
     }
     setNewRequirementLabel('');
@@ -107,7 +142,9 @@ export default function CoachAthletesPage() {
   };
 
   const handleRemoveRequirement = async (id: string) => {
-    await supabase.from('sport_document_requirements').delete().eq('id', id);
+    // Soft-delete only — the label is kept forever so the Document Archive
+    // can still show what this used to be called for past semesters.
+    await supabase.from('sport_document_requirements').update({ active: false }).eq('id', id);
     setRemoveTarget(null);
     reloadRequirements();
     loadAthletes();
@@ -128,6 +165,7 @@ export default function CoachAthletesPage() {
 
   useEffect(() => {
     loadAthletes();
+    loadDeadline();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sport]);
 
@@ -192,12 +230,17 @@ export default function CoachAthletesPage() {
             </p>
 
             <label className="block text-sm font-medium text-neutral-800 mb-1.5">Submission Deadline</label>
-            <Input
-              type="date"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              className="mb-4 max-w-xs"
-            />
+            <div className="flex items-center gap-2 mb-4">
+              <Input
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                className="max-w-xs"
+              />
+              <Button type="button" variant="outline" className="h-9 shrink-0" onClick={handleSaveDeadline}>
+                {deadlineSaved ? 'Saved' : 'Save Deadline'}
+              </Button>
+            </div>
 
             <div className="rounded-lg bg-neutral-50 border border-neutral-100 p-4 mb-4">
               <p className="text-sm font-medium text-neutral-800 mb-2">Current Requirements:</p>
@@ -285,18 +328,29 @@ export default function CoachAthletesPage() {
                         >
                           {expandedAthlete === a.id ? 'Hide Documents' : 'View Documents'}
                         </Button>
-                        <Button
-                          type="button"
-                          disabled={a.uploadedCount < requirements.length || requirements.length === 0 || a.document_compile_status !== 'not_ready'}
-                          onClick={() => handleCompile(a.id)}
-                          className="bg-green-600 hover:bg-green-700 disabled:bg-neutral-200 text-xs h-8"
-                        >
-                          {a.document_compile_status === 'not_ready'
-                            ? a.revision_note
-                              ? 'Re-compile'
-                              : 'Compile'
-                            : 'Compiled'}
-                        </Button>
+                        {a.uploadedCount >= requirements.length && requirements.length > 0 && !a.documents_submitted_at ? (
+                          <span className="text-xs font-medium text-amber-600 bg-amber-50 border border-amber-100 rounded-full px-2 py-1.5">
+                            Awaiting student submission
+                          </span>
+                        ) : (
+                          <Button
+                            type="button"
+                            disabled={
+                              a.uploadedCount < requirements.length ||
+                              requirements.length === 0 ||
+                              !a.documents_submitted_at ||
+                              a.document_compile_status !== 'not_ready'
+                            }
+                            onClick={() => handleCompile(a.id)}
+                            className="bg-green-600 hover:bg-green-700 disabled:bg-neutral-200 text-xs h-8"
+                          >
+                            {a.document_compile_status === 'not_ready'
+                              ? a.revision_note
+                                ? 'Re-compile'
+                                : 'Compile'
+                              : 'Compiled'}
+                          </Button>
+                        )}
                       </div>
                     </div>
 

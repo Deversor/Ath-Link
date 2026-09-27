@@ -76,6 +76,7 @@ export function AthleteGalleryContent() {
         .from('sport_document_requirements')
         .select('sport, doc_type, label, sort_order')
         .in('sport', sports)
+        .eq('active', true)
         .order('sort_order');
       const bySport: Record<string, DocRequirement[]> = {};
       (reqs ?? []).forEach((r) => {

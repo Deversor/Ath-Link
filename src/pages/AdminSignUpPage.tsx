@@ -103,7 +103,7 @@ export default function AdminSignUpPage() {
             <Label htmlFor="email" className="mb-1.5 block">
               Email
             </Label>
-            <Input id="email" type="email" placeholder="you@psu.edu" {...register('email')} />
+            <Input id="email" type="email" placeholder="you@psu.palawan.edu.ph" {...register('email')} />
             {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
           </div>
 
